@@ -19,13 +19,12 @@ EXPORT double calculate_hba1c_pure(const double *measurements, size_t length) {
 
     double sum = 0.0;
     for (size_t i = 0; i < length; i++) {
-        // Валідація даних (критично для медичного софту)
         if (measurements[i] < 0) return -1.0; 
         sum += measurements[i];
     }
     
     double eAG = sum / (double)length;
 
-    // Формула: HbA1c (%) = (eAG + 2.594) / 1.594
+    // HbA1c (%) = (eAG + 2.594) / 1.594
     return (eAG + ADAG_OFFSET) / ADAG_DIVISOR;
 }
