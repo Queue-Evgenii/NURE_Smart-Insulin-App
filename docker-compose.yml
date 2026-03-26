@@ -28,12 +28,11 @@ services:
       - SPRING_DATASOURCE_USERNAME=postgres
       - SPRING_DATASOURCE_PASSWORD=1111
     volumes:
-      - shared-libs:/usr/local/lib/nativelibs
+      - ./hba1c-lib/dist:/usr/local/lib/nativelibs
     depends_on:
       db:
         condition: service_healthy
       hba1c-builder:
         condition: service_completed_successfully
 
-volumes:
-  shared-libs:
+volumes: {}

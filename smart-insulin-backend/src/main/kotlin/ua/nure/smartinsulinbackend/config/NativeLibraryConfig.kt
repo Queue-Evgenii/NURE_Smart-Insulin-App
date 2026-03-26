@@ -10,6 +10,6 @@ class NativeLibraryConfig {
 
     @Bean
     fun hbA1cLibrary(): HbA1cLibrary {
-        return Native.load("hba1c", HbA1cLibrary::class.java)
+        return Native.load("diabetes", HbA1cLibrary::class.java)
     }
 }
