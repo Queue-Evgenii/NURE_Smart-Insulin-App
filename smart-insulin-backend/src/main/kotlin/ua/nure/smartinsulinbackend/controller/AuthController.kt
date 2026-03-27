@@ -1,7 +1,7 @@
 package ua.nure.smartinsulinbackend.controller
 
 import org.springframework.web.bind.annotation.*
-import ua.nure.smartinsulinbackend.config.JwtService
+import ua.nure.smartinsulinbackend.service.JwtService
 import ua.nure.smartinsulinbackend.dto.*
 import ua.nure.smartinsulinbackend.service.AuthService
 

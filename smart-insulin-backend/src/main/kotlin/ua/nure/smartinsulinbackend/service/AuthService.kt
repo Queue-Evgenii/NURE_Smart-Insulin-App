@@ -3,7 +3,7 @@ package ua.nure.smartinsulinbackend.service
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.stereotype.Service
-import ua.nure.smartinsulinbackend.config.JwtService
+import ua.nure.smartinsulinbackend.service.JwtService
 import ua.nure.smartinsulinbackend.dto.*
 import ua.nure.smartinsulinbackend.repository.UserRepository
 
