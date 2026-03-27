@@ -24,12 +24,14 @@ class JwtAuthenticationFilter(
         }
 
         val jwt = authHeader.substring(7)
-        val email = jwtService.extractEmail(jwt)
+        val email = try { jwtService.extractEmail(jwt) } catch (e: Exception) { null }
 
         if (email != null && SecurityContextHolder.getContext().authentication == null) {
             val userDetails = userService.loadUserByUsername(email)
-            val authToken = UsernamePasswordAuthenticationToken(userDetails, null, userDetails.authorities)
-            SecurityContextHolder.getContext().authentication = authToken
+            if (jwtService.isTokenValid(jwt, userDetails)) {
+                val authToken = UsernamePasswordAuthenticationToken(userDetails, null, userDetails.authorities)
+                SecurityContextHolder.getContext().authentication = authToken
+            }
         }
         filterChain.doFilter(request, response)
     }

@@ -1,18 +1,24 @@
 package ua.nure.smartinsulinbackend.service
 
+import io.jsonwebtoken.JwtException
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.security.Keys
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.stereotype.Service
 import java.util.Date
 
 @Service
-class JwtService {
-    private val secret = "your-256-bit-secret-key-must-be-very-long-and-secure"
-    private val key = Keys.hmacShaKeyFor(secret.toByteArray())
+class JwtService(
+    @Value("\${jwt.secret}") private val secret: String,
+    @Value("\${jwt.access-token-expiration:3600000}") private val accessTokenExpiration: Long,
+    @Value("\${jwt.refresh-token-expiration:604800000}") private val refreshTokenExpiration: Long,
+) {
+    private val key by lazy { Keys.hmacShaKeyFor(secret.toByteArray()) }
 
-    fun generateAccessToken(user: UserDetails): String = buildToken(user, 3600000) // 1 год
-    fun generateRefreshToken(user: UserDetails): String = buildToken(user, 604800000) // 7 днів
+    fun generateAccessToken(user: UserDetails): String = buildToken(user, accessTokenExpiration)
+    fun generateRefreshToken(user: UserDetails): String = buildToken(user, refreshTokenExpiration)
+    fun getRefreshTokenExpiration(): Long = refreshTokenExpiration
 
     private fun buildToken(user: UserDetails, expiration: Long): String =
         Jwts.builder()
@@ -24,4 +30,11 @@ class JwtService {
 
     fun extractEmail(token: String): String? =
         Jwts.parser().verifyWith(key).build().parseSignedClaims(token).payload.subject
+
+    fun isTokenValid(token: String, userDetails: UserDetails): Boolean =
+        try {
+            extractEmail(token) == userDetails.username
+        } catch (e: JwtException) {
+            false
+        }
 }
