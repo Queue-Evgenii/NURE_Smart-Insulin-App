@@ -24,6 +24,7 @@ class SecurityConfig(private val jwtAuthFilter: JwtAuthenticationFilter) {
     @Bean
     fun securityFilterChain(http: HttpSecurity): SecurityFilterChain {
         http
+            .cors { it.configurationSource(corsConfigurationSource()) }
             .csrf { it.disable() }
             .authorizeHttpRequests { auth ->
                 auth.requestMatchers("/api/auth/**", "/error").permitAll() // Дозволяємо логін/реєстрацію
