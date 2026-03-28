@@ -166,7 +166,7 @@ async function handleRegister() {
   loading.value = false;
 
   if (result.ok) {
-    router.replace('/tabs/tab1');
+    router.replace('/dashboard');
   } else {
     errorMsg.value = result.error;
   }
