@@ -1,7 +1,7 @@
 import { ref } from 'vue';
 import { getAccessToken, getRefreshToken, setTokens, clearTokens } from './token';
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080';
 
 export const isAuthenticated = ref(false);
 

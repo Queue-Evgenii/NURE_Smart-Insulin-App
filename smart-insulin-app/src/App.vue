@@ -9,20 +9,20 @@
         </ion-header>
         <ion-content>
           <ion-list>
-            <ion-menu-toggle auto-hide="true">
-              <ion-item router-link="/dashboard" router-direction="root" lines="none" detail="false">
+            <ion-menu-toggle :auto-hide="true">
+              <ion-item router-link="/dashboard" router-direction="root" lines="none" :detail="false">
                 <ion-icon slot="start" :icon="homeOutline" />
                 <ion-label>Dashboard</ion-label>
               </ion-item>
             </ion-menu-toggle>
-            <ion-menu-toggle auto-hide="true">
-              <ion-item router-link="/profile" router-direction="root" lines="none" detail="false">
+            <ion-menu-toggle :auto-hide="true">
+              <ion-item router-link="/profile" router-direction="root" lines="none" :detail="false">
                 <ion-icon slot="start" :icon="personOutline" />
                 <ion-label>Profile</ion-label>
               </ion-item>
             </ion-menu-toggle>
-            <ion-menu-toggle auto-hide="true">
-              <ion-item lines="none" detail="false" button @click="handleLogout">
+            <ion-menu-toggle :auto-hide="true">
+              <ion-item lines="none" :detail="false" button @click="handleLogout">
                 <ion-icon slot="start" :icon="logOutOutline" />
                 <ion-label>Log Out</ion-label>
               </ion-item>

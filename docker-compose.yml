@@ -7,7 +7,9 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: 1111
     ports:
-      - "5432:5432"
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d smart-insulin-db"]
       interval: 5s
@@ -35,4 +37,15 @@ services:
       hba1c-builder:
         condition: service_completed_successfully
 
-volumes: {}
+  frontend:
+    build:
+      context: ./smart-insulin-app
+      args:
+        VITE_API_BASE_URL: ""
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
