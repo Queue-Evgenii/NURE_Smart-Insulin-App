@@ -1,0 +1,66 @@
+services:
+  db:
+    image: postgres:15
+    container_name: smart-insulin-db
+    restart: always
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - internal
+
+  hba1c-builder:
+    build: ./hba1c-lib
+    volumes:
+      - hba1c_dist:/dist
+
+  backend:
+    build: ./smart-insulin-backend
+    restart: always
+    expose:
+      - "8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/${POSTGRES_DB}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+    volumes:
+      - hba1c_dist:/usr/local/lib/nativelibs:ro
+    depends_on:
+      db:
+        condition: service_healthy
+      hba1c-builder:
+        condition: service_completed_successfully
+    networks:
+      - internal
+
+  frontend:
+    build:
+      context: ./smart-insulin-app
+      args:
+        VITE_API_BASE_URL: ""
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - internal
+
+volumes:
+  postgres_data:
+  hba1c_dist:
+
+networks:
+  internal:
+    driver: bridge
