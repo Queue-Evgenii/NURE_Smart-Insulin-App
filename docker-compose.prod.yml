@@ -29,7 +29,7 @@ services:
     build: ./smart-insulin-backend
     restart: always
     expose:
-      - "8080"
+      - "8080:8080"
     env_file: .env
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/${POSTGRES_DB}
