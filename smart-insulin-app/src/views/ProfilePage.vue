@@ -14,164 +14,174 @@
         <ion-spinner name="crescent" />
       </div>
 
-      <form v-else @submit.prevent="saveProfile">
-        <!-- Personal info -->
-        <ion-card>
-          <ion-card-header>
-            <ion-card-title>Personal Information</ion-card-title>
-          </ion-card-header>
-          <ion-card-content>
-            <ion-list lines="none">
-              <ion-item>
-                <ion-input
-                  v-model="form.email"
-                  label="Email"
-                  label-placement="floating"
-                  readonly
-                  disabled
-                />
-              </ion-item>
-              <ion-item>
-                <ion-input
-                  v-model="form.fullName"
-                  label="Full Name"
-                  label-placement="floating"
-                  placeholder="John Doe"
-                />
-              </ion-item>
-              <ion-item>
-                <ion-select
-                  v-model="form.diabetesType"
-                  label="Diabetes Type"
-                  label-placement="floating"
-                  interface="action-sheet"
-                  placeholder="Select"
-                >
-                  <ion-select-option :value="1">Type 1</ion-select-option>
-                  <ion-select-option :value="2">Type 2</ion-select-option>
-                </ion-select>
-              </ion-item>
-            </ion-list>
-          </ion-card-content>
-        </ion-card>
+      <form v-else @submit.prevent="saveProfile" class="page-wrapper">
+        <div class="profile-grid">
 
-        <!-- Body measurements -->
-        <ion-card>
-          <ion-card-header>
-            <ion-card-title>Body Measurements</ion-card-title>
-          </ion-card-header>
-          <ion-card-content>
-            <ion-list lines="none">
-              <ion-item>
-                <ion-input
-                  v-model.number="form.weightKg"
-                  type="number"
-                  label="Weight (kg)"
-                  label-placement="floating"
-                  step="0.1"
-                />
-              </ion-item>
-              <ion-item>
-                <ion-input
-                  v-model.number="form.heightCm"
-                  type="number"
-                  label="Height (cm)"
-                  label-placement="floating"
-                  step="0.1"
-                />
-              </ion-item>
-            </ion-list>
-          </ion-card-content>
-        </ion-card>
+          <!-- Left column -->
+          <div class="profile-col">
+            <!-- Personal info -->
+            <ion-card>
+              <ion-card-header>
+                <ion-card-title>Personal Information</ion-card-title>
+              </ion-card-header>
+              <ion-card-content>
+                <ion-list lines="none">
+                  <ion-item>
+                    <ion-input
+                      v-model="form.email"
+                      label="Email"
+                      label-placement="floating"
+                      readonly
+                      disabled
+                    />
+                  </ion-item>
+                  <ion-item>
+                    <ion-input
+                      v-model="form.fullName"
+                      label="Full Name"
+                      label-placement="floating"
+                      placeholder="John Doe"
+                    />
+                  </ion-item>
+                  <ion-item>
+                    <ion-select
+                      v-model="form.diabetesType"
+                      label="Diabetes Type"
+                      label-placement="floating"
+                      interface="action-sheet"
+                      placeholder="Select"
+                    >
+                      <ion-select-option :value="1">Type 1</ion-select-option>
+                      <ion-select-option :value="2">Type 2</ion-select-option>
+                    </ion-select>
+                  </ion-item>
+                </ion-list>
+              </ion-card-content>
+            </ion-card>
 
-        <!-- Insulin settings -->
-        <ion-card>
-          <ion-card-header>
-            <ion-card-title>Insulin Settings</ion-card-title>
-          </ion-card-header>
-          <ion-card-content>
-            <ion-list lines="none">
-              <ion-item>
-                <ion-input
-                  v-model.number="form.insulinSensitivityFactor"
-                  type="number"
-                  label="Insulin Sensitivity Factor (mmol/L per unit)"
-                  label-placement="floating"
-                  step="0.1"
-                />
-              </ion-item>
-              <ion-item>
-                <ion-input
-                  v-model.number="form.insulinToCarbRatio"
-                  type="number"
-                  label="Insulin-to-Carb Ratio (g per unit)"
-                  label-placement="floating"
-                  step="0.1"
-                />
-              </ion-item>
-              <ion-item>
-                <ion-input
-                  v-model.number="form.durationOfInsulinAction"
-                  type="number"
-                  label="Duration of Insulin Action (hours)"
-                  label-placement="floating"
-                  step="0.5"
-                />
-              </ion-item>
-              <ion-item>
-                <ion-input
-                  v-model="form.basalInsulinType"
-                  label="Basal Insulin Type"
-                  label-placement="floating"
-                  placeholder="e.g. Lantus, Tresiba"
-                />
-              </ion-item>
-              <ion-item>
-                <ion-input
-                  v-model="form.bolusInsulinType"
-                  label="Bolus Insulin Type"
-                  label-placement="floating"
-                  placeholder="e.g. NovoRapid, Humalog"
-                />
-              </ion-item>
-            </ion-list>
-          </ion-card-content>
-        </ion-card>
+            <!-- Body measurements -->
+            <ion-card>
+              <ion-card-header>
+                <ion-card-title>Body Measurements</ion-card-title>
+              </ion-card-header>
+              <ion-card-content>
+                <ion-list lines="none">
+                  <ion-item>
+                    <ion-input
+                      v-model.number="form.weightKg"
+                      type="number"
+                      label="Weight (kg)"
+                      label-placement="floating"
+                      step="0.1"
+                    />
+                  </ion-item>
+                  <ion-item>
+                    <ion-input
+                      v-model.number="form.heightCm"
+                      type="number"
+                      label="Height (cm)"
+                      label-placement="floating"
+                      step="0.1"
+                    />
+                  </ion-item>
+                </ion-list>
+              </ion-card-content>
+            </ion-card>
+          </div>
 
-        <!-- Target glucose range -->
-        <ion-card>
-          <ion-card-header>
-            <ion-card-title>Target Glucose Range</ion-card-title>
-          </ion-card-header>
-          <ion-card-content>
-            <ion-list lines="none">
-              <ion-item>
-                <ion-input
-                  v-model.number="form.targetGlucoseMin"
-                  type="number"
-                  label="Min (mmol/L)"
-                  label-placement="floating"
-                  step="0.1"
-                />
-              </ion-item>
-              <ion-item>
-                <ion-input
-                  v-model.number="form.targetGlucoseMax"
-                  type="number"
-                  label="Max (mmol/L)"
-                  label-placement="floating"
-                  step="0.1"
-                />
-              </ion-item>
-            </ion-list>
-          </ion-card-content>
-        </ion-card>
+          <!-- Right column -->
+          <div class="profile-col">
+            <!-- Insulin settings -->
+            <ion-card>
+              <ion-card-header>
+                <ion-card-title>Insulin Settings</ion-card-title>
+              </ion-card-header>
+              <ion-card-content>
+                <ion-list lines="none">
+                  <ion-item>
+                    <ion-input
+                      v-model.number="form.insulinSensitivityFactor"
+                      type="number"
+                      label="Insulin Sensitivity Factor (mmol/L per unit)"
+                      label-placement="floating"
+                      step="0.1"
+                    />
+                  </ion-item>
+                  <ion-item>
+                    <ion-input
+                      v-model.number="form.insulinToCarbRatio"
+                      type="number"
+                      label="Insulin-to-Carb Ratio (g per unit)"
+                      label-placement="floating"
+                      step="0.1"
+                    />
+                  </ion-item>
+                  <ion-item>
+                    <ion-input
+                      v-model.number="form.durationOfInsulinAction"
+                      type="number"
+                      label="Duration of Insulin Action (hours)"
+                      label-placement="floating"
+                      step="0.5"
+                    />
+                  </ion-item>
+                  <ion-item>
+                    <ion-input
+                      v-model="form.basalInsulinType"
+                      label="Basal Insulin Type"
+                      label-placement="floating"
+                      placeholder="e.g. Lantus, Tresiba"
+                    />
+                  </ion-item>
+                  <ion-item>
+                    <ion-input
+                      v-model="form.bolusInsulinType"
+                      label="Bolus Insulin Type"
+                      label-placement="floating"
+                      placeholder="e.g. NovoRapid, Humalog"
+                    />
+                  </ion-item>
+                </ion-list>
+              </ion-card-content>
+            </ion-card>
+
+            <!-- Target glucose range -->
+            <ion-card>
+              <ion-card-header>
+                <ion-card-title>Target Glucose Range</ion-card-title>
+              </ion-card-header>
+              <ion-card-content>
+                <ion-list lines="none">
+                  <ion-item>
+                    <ion-input
+                      v-model.number="form.targetGlucoseMin"
+                      type="number"
+                      label="Min (mmol/L)"
+                      label-placement="floating"
+                      step="0.1"
+                    />
+                  </ion-item>
+                  <ion-item>
+                    <ion-input
+                      v-model.number="form.targetGlucoseMax"
+                      type="number"
+                      label="Max (mmol/L)"
+                      label-placement="floating"
+                      step="0.1"
+                    />
+                  </ion-item>
+                </ion-list>
+              </ion-card-content>
+            </ion-card>
+          </div>
+
+        </div>
 
         <ion-text v-if="errorMsg" color="danger" class="error-text">
           <p>{{ errorMsg }}</p>
         </ion-text>
 
-        <ion-button expand="block" type="submit" :disabled="saving" class="ion-margin-top ion-margin-bottom">
+        <ion-button expand="block" type="submit" :disabled="saving" class="ion-margin-top ion-margin-bottom save-btn">
           <ion-spinner v-if="saving" name="crescent" />
           <span v-else>Save Changes</span>
         </ion-button>
@@ -299,5 +309,34 @@ ion-item {
   font-size: 14px;
   text-align: center;
   margin: 8px 16px;
+}
+
+/* Desktop layout */
+.profile-grid {
+  display: flex;
+  flex-direction: column;
+}
+
+.profile-col {
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  .profile-grid {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .profile-col {
+    flex: 1;
+  }
+
+  .save-btn {
+    max-width: 320px;
+    margin-left: auto;
+    margin-right: auto;
+    display: block;
+  }
 }
 </style>

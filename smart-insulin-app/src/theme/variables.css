@@ -1,2 +1,14 @@
 /* For information on how to create your own theme, please refer to:
 http://ionicframework.com/docs/theming/ */
+
+:root {
+  --app-max-width: 1400px;
+  --app-breakpoint-md: 768px;
+}
+
+/* Constrain and center content on wide screens */
+.page-wrapper {
+  max-width: var(--app-max-width);
+  margin: 0 auto;
+  width: 100%;
+}

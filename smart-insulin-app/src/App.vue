@@ -1,6 +1,6 @@
 <template>
   <ion-app>
-    <ion-split-pane content-id="main-content">
+    <ion-split-pane content-id="main-content" when="md">
       <ion-menu content-id="main-content" type="overlay">
         <ion-header>
           <ion-toolbar color="primary">
@@ -8,21 +8,21 @@
           </ion-toolbar>
         </ion-header>
         <ion-content>
-          <ion-list>
-            <ion-menu-toggle :auto-hide="true">
-              <ion-item router-link="/dashboard" router-direction="root" lines="none" :detail="false">
+          <ion-list lines="none">
+            <ion-menu-toggle :auto-hide="false">
+              <ion-item router-link="/dashboard" router-direction="root" lines="none" :detail="false" class="menu-item">
                 <ion-icon slot="start" :icon="homeOutline" />
                 <ion-label>Dashboard</ion-label>
               </ion-item>
             </ion-menu-toggle>
-            <ion-menu-toggle :auto-hide="true">
-              <ion-item router-link="/profile" router-direction="root" lines="none" :detail="false">
+            <ion-menu-toggle :auto-hide="false">
+              <ion-item router-link="/profile" router-direction="root" lines="none" :detail="false" class="menu-item">
                 <ion-icon slot="start" :icon="personOutline" />
                 <ion-label>Profile</ion-label>
               </ion-item>
             </ion-menu-toggle>
-            <ion-menu-toggle :auto-hide="true">
-              <ion-item lines="none" :detail="false" button @click="handleLogout">
+            <ion-menu-toggle :auto-hide="false">
+              <ion-item lines="none" :detail="false" button @click="handleLogout" class="menu-item menu-item--logout">
                 <ion-icon slot="start" :icon="logOutOutline" />
                 <ion-label>Log Out</ion-label>
               </ion-item>
@@ -34,6 +34,23 @@
     </ion-split-pane>
   </ion-app>
 </template>
+
+<style>
+ion-menu ion-content {
+  --padding-top: 8px;
+}
+
+ion-menu .menu-item {
+  --border-radius: 8px;
+  margin: 2px 8px;
+  --padding-start: 12px;
+}
+
+ion-menu .menu-item--logout {
+  --color: var(--ion-color-danger);
+  margin-top: auto;
+}
+</style>
 
 <script setup lang="ts">
 import {
