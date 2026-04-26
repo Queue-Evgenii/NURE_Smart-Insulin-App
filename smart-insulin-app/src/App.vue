@@ -12,19 +12,37 @@
             <ion-menu-toggle :auto-hide="false">
               <ion-item router-link="/dashboard" router-direction="root" lines="none" :detail="false" class="menu-item">
                 <ion-icon slot="start" :icon="homeOutline" />
-                <ion-label>Dashboard</ion-label>
+                <ion-label>{{ t('menu.dashboard') }}</ion-label>
+              </ion-item>
+            </ion-menu-toggle>
+            <ion-menu-toggle :auto-hide="false">
+              <ion-item router-link="/bolus" router-direction="root" lines="none" :detail="false" class="menu-item">
+                <ion-icon slot="start" :icon="calculatorOutline" />
+                <ion-label>{{ t('menu.bolus') }}</ion-label>
+              </ion-item>
+            </ion-menu-toggle>
+            <ion-menu-toggle :auto-hide="false">
+              <ion-item router-link="/meals" router-direction="root" lines="none" :detail="false" class="menu-item">
+                <ion-icon slot="start" :icon="restaurantOutline" />
+                <ion-label>{{ t('menu.meals') }}</ion-label>
+              </ion-item>
+            </ion-menu-toggle>
+            <ion-menu-toggle :auto-hide="false">
+              <ion-item router-link="/doses" router-direction="root" lines="none" :detail="false" class="menu-item">
+                <ion-icon slot="start" :icon="medkitOutline" />
+                <ion-label>{{ t('menu.doses') }}</ion-label>
               </ion-item>
             </ion-menu-toggle>
             <ion-menu-toggle :auto-hide="false">
               <ion-item router-link="/profile" router-direction="root" lines="none" :detail="false" class="menu-item">
                 <ion-icon slot="start" :icon="personOutline" />
-                <ion-label>Profile</ion-label>
+                <ion-label>{{ t('menu.profile') }}</ion-label>
               </ion-item>
             </ion-menu-toggle>
             <ion-menu-toggle :auto-hide="false">
               <ion-item lines="none" :detail="false" button @click="handleLogout" class="menu-item menu-item--logout">
                 <ion-icon slot="start" :icon="logOutOutline" />
-                <ion-label>Log Out</ion-label>
+                <ion-label>{{ t('menu.logout') }}</ion-label>
               </ion-item>
             </ion-menu-toggle>
           </ion-list>
@@ -68,9 +86,12 @@ import {
   IonLabel,
   IonMenuToggle,
 } from '@ionic/vue';
-import { homeOutline, personOutline, logOutOutline } from 'ionicons/icons';
+import { homeOutline, personOutline, logOutOutline, calculatorOutline, restaurantOutline, medkitOutline } from 'ionicons/icons';
 import { useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 import { logout } from '@/services/auth';
+
+const { t } = useI18n();
 
 const router = useRouter();
 

@@ -16,7 +16,7 @@ class MealRecord(
     val mealName: String? = null,
 
     /** Кількість вуглеводів у їжі (грами) */
-    @Column(nullable = false)
+    @Column(name = "carbohydrates_g", nullable = false)
     val carbohydratesG: Double,
 
     /** Глікемічний індекс страви (1–100) */

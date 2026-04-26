@@ -5,7 +5,7 @@
         <div class="auth-header">
           <ion-icon :icon="medkit" class="auth-logo" />
           <h1>Smart Insulin</h1>
-          <p>Sign in to your account</p>
+          <p>{{ t('auth.login.subtitle') }}</p>
         </div>
 
         <form @submit.prevent="handleLogin">
@@ -14,9 +14,9 @@
               <ion-input
                 v-model="email"
                 type="email"
-                label="Email"
+                :label="t('auth.email')"
                 label-placement="floating"
-                placeholder="your@email.com"
+                :placeholder="t('auth.emailPlaceholder')"
                 autocomplete="email"
                 required
               />
@@ -26,19 +26,13 @@
               <ion-input
                 v-model="password"
                 :type="showPassword ? 'text' : 'password'"
-                label="Password"
+                :label="t('auth.password')"
                 label-placement="floating"
                 placeholder="••••••••"
                 autocomplete="current-password"
                 required
               />
-              <ion-button
-                slot="end"
-                fill="clear"
-                size="small"
-                @click="showPassword = !showPassword"
-                type="button"
-              >
+              <ion-button slot="end" fill="clear" size="small" @click="showPassword = !showPassword" type="button">
                 <ion-icon :icon="showPassword ? eyeOff : eye" slot="icon-only" />
               </ion-button>
             </ion-item>
@@ -48,21 +42,16 @@
             <p>{{ errorMsg }}</p>
           </ion-text>
 
-          <ion-button
-            expand="block"
-            type="submit"
-            :disabled="loading"
-            class="ion-margin-top"
-          >
+          <ion-button expand="block" type="submit" :disabled="loading" class="ion-margin-top">
             <ion-spinner v-if="loading" name="crescent" />
-            <span v-else>Sign In</span>
+            <span v-else>{{ t('auth.login.signIn') }}</span>
           </ion-button>
         </form>
 
         <div class="auth-footer">
           <p>
-            Don't have an account?
-            <router-link to="/register">Create one</router-link>
+            {{ t('auth.login.noAccount') }}
+            <router-link to="/register">{{ t('auth.login.createOne') }}</router-link>
           </p>
         </div>
       </div>
@@ -73,20 +62,15 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 import {
-  IonPage,
-  IonContent,
-  IonList,
-  IonItem,
-  IonInput,
-  IonButton,
-  IonText,
-  IonIcon,
-  IonSpinner,
+  IonPage, IonContent, IonList, IonItem, IonInput,
+  IonButton, IonText, IonIcon, IonSpinner,
 } from '@ionic/vue';
 import { medkit, eye, eyeOff } from 'ionicons/icons';
 import { login } from '@/services/auth';
 
+const { t } = useI18n();
 const router = useRouter();
 
 const email = ref('');
@@ -97,17 +81,13 @@ const errorMsg = ref('');
 
 async function handleLogin() {
   if (!email.value || !password.value) {
-    errorMsg.value = 'Please fill in all fields.';
+    errorMsg.value = t('auth.login.errorFields');
     return;
   }
-
   loading.value = true;
   errorMsg.value = '';
-
   const result = await login(email.value, password.value);
-
   loading.value = false;
-
   if (result.ok) {
     router.replace('/dashboard');
   } else {
@@ -149,9 +129,7 @@ async function handleLogin() {
   margin: 0;
 }
 
-ion-list {
-  background: transparent;
-}
+ion-list { background: transparent; }
 
 ion-item {
   --background: var(--ion-color-light);

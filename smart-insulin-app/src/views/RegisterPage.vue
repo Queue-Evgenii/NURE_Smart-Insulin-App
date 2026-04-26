@@ -4,8 +4,8 @@
       <div class="auth-container">
         <div class="auth-header">
           <ion-icon :icon="medkit" class="auth-logo" />
-          <h1>Create Account</h1>
-          <p>Join Smart Insulin today</p>
+          <h1>{{ t('auth.register.title') }}</h1>
+          <p>{{ t('auth.register.subtitle') }}</p>
         </div>
 
         <form @submit.prevent="handleRegister">
@@ -14,9 +14,9 @@
               <ion-input
                 v-model="fullName"
                 type="text"
-                label="Full Name"
+                :label="t('auth.register.fullName')"
                 label-placement="floating"
-                placeholder="John Doe"
+                :placeholder="t('auth.register.fullNamePlaceholder')"
                 autocomplete="name"
                 required
               />
@@ -26,9 +26,9 @@
               <ion-input
                 v-model="email"
                 type="email"
-                label="Email"
+                :label="t('auth.email')"
                 label-placement="floating"
-                placeholder="your@email.com"
+                :placeholder="t('auth.emailPlaceholder')"
                 autocomplete="email"
                 required
               />
@@ -38,19 +38,13 @@
               <ion-input
                 v-model="password"
                 :type="showPassword ? 'text' : 'password'"
-                label="Password"
+                :label="t('auth.password')"
                 label-placement="floating"
                 placeholder="••••••••"
                 autocomplete="new-password"
                 required
               />
-              <ion-button
-                slot="end"
-                fill="clear"
-                size="small"
-                @click="showPassword = !showPassword"
-                type="button"
-              >
+              <ion-button slot="end" fill="clear" size="small" @click="showPassword = !showPassword" type="button">
                 <ion-icon :icon="showPassword ? eyeOff : eye" slot="icon-only" />
               </ion-button>
             </ion-item>
@@ -59,7 +53,7 @@
               <ion-input
                 v-model="confirmPassword"
                 :type="showPassword ? 'text' : 'password'"
-                label="Confirm Password"
+                :label="t('auth.register.confirmPassword')"
                 label-placement="floating"
                 placeholder="••••••••"
                 autocomplete="new-password"
@@ -70,13 +64,13 @@
             <ion-item>
               <ion-select
                 v-model="diabetesType"
-                label="Diabetes Type"
+                :label="t('auth.register.diabetesType')"
                 label-placement="floating"
-                placeholder="Select type (optional)"
+                :placeholder="t('auth.register.diabetesTypePlaceholder')"
                 interface="action-sheet"
               >
-                <ion-select-option :value="1">Type 1</ion-select-option>
-                <ion-select-option :value="2">Type 2</ion-select-option>
+                <ion-select-option :value="1">{{ t('auth.type1') }}</ion-select-option>
+                <ion-select-option :value="2">{{ t('auth.type2') }}</ion-select-option>
               </ion-select>
             </ion-item>
           </ion-list>
@@ -85,21 +79,16 @@
             <p>{{ errorMsg }}</p>
           </ion-text>
 
-          <ion-button
-            expand="block"
-            type="submit"
-            :disabled="loading"
-            class="ion-margin-top"
-          >
+          <ion-button expand="block" type="submit" :disabled="loading" class="ion-margin-top">
             <ion-spinner v-if="loading" name="crescent" />
-            <span v-else>Create Account</span>
+            <span v-else>{{ t('auth.register.createAccount') }}</span>
           </ion-button>
         </form>
 
         <div class="auth-footer">
           <p>
-            Already have an account?
-            <router-link to="/login">Sign in</router-link>
+            {{ t('auth.register.alreadyAccount') }}
+            <router-link to="/login">{{ t('auth.register.signIn') }}</router-link>
           </p>
         </div>
       </div>
@@ -110,22 +99,15 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 import {
-  IonPage,
-  IonContent,
-  IonList,
-  IonItem,
-  IonInput,
-  IonButton,
-  IonText,
-  IonIcon,
-  IonSpinner,
-  IonSelect,
-  IonSelectOption,
+  IonPage, IonContent, IonList, IonItem, IonInput,
+  IonButton, IonText, IonIcon, IonSpinner, IonSelect, IonSelectOption,
 } from '@ionic/vue';
 import { medkit, eye, eyeOff } from 'ionicons/icons';
 import { register } from '@/services/auth';
 
+const { t } = useI18n();
 const router = useRouter();
 
 const fullName = ref('');
@@ -139,32 +121,21 @@ const errorMsg = ref('');
 
 async function handleRegister() {
   if (!fullName.value || !email.value || !password.value || !confirmPassword.value) {
-    errorMsg.value = 'Please fill in all required fields.';
+    errorMsg.value = t('auth.register.errorFields');
     return;
   }
-
   if (password.value.length < 6) {
-    errorMsg.value = 'Password must be at least 6 characters.';
+    errorMsg.value = t('auth.register.errorPasswordLength');
     return;
   }
-
   if (password.value !== confirmPassword.value) {
-    errorMsg.value = 'Passwords do not match.';
+    errorMsg.value = t('auth.register.errorPasswordMatch');
     return;
   }
-
   loading.value = true;
   errorMsg.value = '';
-
-  const result = await register(
-    email.value,
-    password.value,
-    fullName.value,
-    diabetesType.value,
-  );
-
+  const result = await register(email.value, password.value, fullName.value, diabetesType.value);
   loading.value = false;
-
   if (result.ok) {
     router.replace('/dashboard');
   } else {
@@ -206,9 +177,7 @@ async function handleRegister() {
   margin: 0;
 }
 
-ion-list {
-  background: transparent;
-}
+ion-list { background: transparent; }
 
 ion-item {
   --background: var(--ion-color-light);

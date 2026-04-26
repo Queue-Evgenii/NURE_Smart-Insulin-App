@@ -22,6 +22,18 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import('@/views/DashboardPage.vue'),
   },
   {
+    path: '/bolus',
+    component: () => import('@/views/BolusPage.vue'),
+  },
+  {
+    path: '/meals',
+    component: () => import('@/views/MealsPage.vue'),
+  },
+  {
+    path: '/doses',
+    component: () => import('@/views/DosesPage.vue'),
+  },
+  {
     path: '/profile',
     component: () => import('@/views/ProfilePage.vue'),
   },
