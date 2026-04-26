@@ -40,7 +40,7 @@ export default {
       errorPasswordMatch: 'Паролі не збігаються.',
     },
     email: 'Електронна пошта',
-    emailPlaceholder: 'your@email.com',
+    emailPlaceholder: "your{'@'}email.com",
     password: 'Пароль',
     type1: 'Тип 1',
     type2: 'Тип 2',

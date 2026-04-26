@@ -40,7 +40,7 @@ export default {
       errorPasswordMatch: 'Passwords do not match.',
     },
     email: 'Email',
-    emailPlaceholder: 'your@email.com',
+    emailPlaceholder: "your{'@'}email.com",
     password: 'Password',
     type1: 'Type 1',
     type2: 'Type 2',

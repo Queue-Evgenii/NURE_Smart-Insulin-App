@@ -1,7 +1,7 @@
 <template>
   <ion-app>
-    <ion-split-pane content-id="main-content" when="md">
-      <ion-menu content-id="main-content" type="overlay">
+    <ion-split-pane content-id="main-content" :when="isAuthenticated ? 'md' : false">
+      <ion-menu v-if="isAuthenticated" content-id="main-content" type="overlay">
         <ion-header>
           <ion-toolbar color="primary">
             <ion-title>Smart Insulin</ion-title>
@@ -89,7 +89,7 @@ import {
 import { homeOutline, personOutline, logOutOutline, calculatorOutline, restaurantOutline, medkitOutline } from 'ionicons/icons';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
-import { logout } from '@/services/auth';
+import { logout, isAuthenticated } from '@/services/auth';
 
 const { t } = useI18n();
 
