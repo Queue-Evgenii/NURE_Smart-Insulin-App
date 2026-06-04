@@ -1,0 +1,51 @@
+scenario_id,scenario_group,description,carbs_g,current_glucose,icr,isf,target_glucose_min,target_glucose_max,iob,expected_bc,expected_bc_safe
+1,normoglycemia,Normal glucose low carbs,60,5.5,10.0,2.5,5.0,7.0,0.0,5.8,5.8
+2,normoglycemia,Normal glucose mid carbs,45,6.0,10.0,2.5,5.0,7.0,0.0,4.5,4.5
+3,normoglycemia,Normal glucose with IOB,30,5.0,10.0,2.5,5.0,7.0,0.5,2.1,2.1
+4,normoglycemia,Normal glucose high carbs,80,6.5,10.0,2.5,5.0,7.0,0.0,8.2,8.2
+5,normoglycemia,Normal glucose with IOB 2,50,5.8,10.0,2.5,5.0,7.0,1.0,3.9,3.9
+6,normoglycemia,Normal glucose low carbs 2,20,7.0,10.0,2.5,5.0,7.0,0.0,2.4,2.4
+7,normoglycemia,Normal glucose high ICR,90,5.5,12.0,3.0,5.0,7.0,0.0,7.3,7.3
+8,normoglycemia,Normal glucose low ICR with IOB,40,6.0,8.0,2.0,5.0,7.0,0.5,4.5,4.5
+9,normoglycemia,Normal glucose slightly low,70,5.2,10.0,2.5,5.0,7.0,0.0,6.7,6.7
+10,normoglycemia,Normal glucose different ICR,35,6.8,9.0,2.0,5.0,7.0,0.0,4.3,4.3
+11,hyperglycemia_correction,High glucose with carbs,60,12.0,10.0,2.5,5.0,7.0,0.0,8.4,8.4
+12,hyperglycemia_correction,High glucose correction only,0,15.0,10.0,2.5,5.0,7.0,0.0,3.6,3.6
+13,hyperglycemia_correction,High glucose with IOB,45,11.0,10.0,2.5,5.0,7.0,1.0,5.5,5.5
+14,hyperglycemia_correction,High glucose different profile,80,13.0,12.0,3.0,5.0,7.0,0.0,9.0,9.0
+15,hyperglycemia_correction,Very high glucose low ISF,30,14.0,10.0,2.0,5.0,7.0,0.0,7.0,7.0
+16,hyperglycemia_correction,High glucose with IOB 2,60,10.5,10.0,2.5,5.0,7.0,0.5,7.3,7.3
+17,hyperglycemia_correction,High glucose correction low ISF,0,11.5,10.0,2.0,5.0,7.0,0.0,2.8,2.8
+18,hyperglycemia_correction,Very high glucose low ICR,50,16.0,8.0,2.0,5.0,7.0,2.0,9.3,9.3
+19,hyperglycemia_correction,High glucose high carbs,70,12.5,10.0,2.5,5.0,7.0,0.0,9.6,9.6
+20,hyperglycemia_correction,Moderate hyperglycemia with IOB,40,10.0,10.0,2.5,5.0,7.0,1.5,4.1,4.1
+21,hypoglycemia_no_insulin,Mild hypoglycemia with carbs,15,3.5,10.0,2.5,5.0,7.0,0.0,0.5,0.0
+22,hypoglycemia_no_insulin,Severe hypoglycemia no carbs,0,2.8,10.0,2.5,5.0,7.0,0.0,0.0,0.0
+23,hypoglycemia_no_insulin,Mild hypoglycemia with carbs 2,20,3.0,10.0,2.5,5.0,7.0,0.0,0.8,0.0
+24,hypoglycemia_no_insulin,Near-hypo with carbs and IOB,30,3.8,10.0,2.5,5.0,7.0,0.5,1.6,0.0
+25,hypoglycemia_no_insulin,Mild hypoglycemia with IOB,0,3.5,10.0,2.5,5.0,7.0,1.0,0.0,0.0
+26,hypoglycemia_no_insulin,Hypoglycemia low ICR,10,3.2,8.0,2.0,5.0,7.0,0.0,0.0,0.0
+27,hypoglycemia_no_insulin,Severe hypoglycemia high IOB,0,2.5,10.0,2.5,5.0,7.0,2.0,0.0,0.0
+28,hypoglycemia_no_insulin,Near-hypo high carbs,50,3.9,10.0,2.5,5.0,7.0,0.0,4.2,0.0
+29,high_iob_overdose_prevention,High IOB reduces dose significantly,60,6.0,10.0,2.5,5.0,7.0,5.0,1.0,1.0
+30,high_iob_overdose_prevention,High IOB with correction,45,7.0,10.0,2.5,5.0,7.0,4.0,0.9,0.9
+31,high_iob_overdose_prevention,Very high IOB blocks dose,80,8.0,10.0,2.5,5.0,7.0,10.0,0.0,0.0
+32,high_iob_overdose_prevention,High IOB blocks correction,60,9.0,10.0,2.5,5.0,7.0,8.0,0.0,0.0
+33,high_iob_overdose_prevention,Moderate IOB partial reduction,50,6.0,10.0,2.5,5.0,7.0,3.0,2.0,2.0
+34,high_iob_overdose_prevention,High IOB with elevated glucose,70,7.5,10.0,2.5,5.0,7.0,6.0,1.6,1.6
+35,high_iob_overdose_prevention,High IOB blocks small dose,40,6.5,10.0,2.5,5.0,7.0,4.5,0.0,0.0
+36,high_iob_overdose_prevention,Moderate IOB small dose remains,30,8.5,10.0,2.5,5.0,7.0,3.5,0.5,0.5
+37,activity_adjusted,Aerobic activity higher ISF,60,7.0,10.0,4.0,5.0,7.0,0.0,6.3,6.3
+38,activity_adjusted,Activity at target glucose,45,6.0,10.0,4.0,5.0,7.0,0.0,4.5,4.5
+39,activity_adjusted,Intense activity very high ISF,80,8.0,10.0,5.0,5.0,7.0,0.0,8.4,8.4
+40,activity_adjusted,Activity with IOB different ICR,30,7.5,8.0,4.5,5.0,7.0,1.0,3.1,3.1
+41,activity_adjusted,Activity at target with IOB,50,6.0,10.0,5.0,5.0,7.0,0.5,4.5,4.5
+42,activity_adjusted,Activity slightly below target,70,5.0,12.0,4.0,5.0,7.0,0.0,5.6,5.6
+43,activity_adjusted,Activity moderately high glucose,40,9.0,10.0,4.5,5.0,7.0,0.5,4.2,4.2
+44,individual_profiles,Patient with high ICR,60,7.0,15.0,3.5,5.0,7.0,0.0,4.3,4.3
+45,individual_profiles,Patient with low ICR high sensitivity,45,8.0,6.0,1.5,5.0,7.0,0.0,8.8,8.8
+46,individual_profiles,Patient with very high ICR,90,6.0,20.0,4.0,5.0,7.0,0.0,4.5,4.5
+47,individual_profiles,Patient with low ISF and IOB,30,10.0,8.0,1.8,5.0,7.0,1.0,5.0,5.0
+48,individual_profiles,Patient with high ICR moderate ISF,70,6.5,12.0,2.8,5.0,7.0,0.0,6.0,6.0
+49,individual_profiles,Patient with low target glucose,50,7.0,10.0,2.5,4.0,7.0,0.0,5.6,5.6
+50,individual_profiles,Patient with high target glucose,60,6.0,10.0,2.5,6.0,8.0,0.0,5.6,5.6

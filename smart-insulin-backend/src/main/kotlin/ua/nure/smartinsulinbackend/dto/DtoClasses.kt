@@ -112,6 +112,37 @@ data class InsulinDoseResponse(
     val createdAt: Instant,
 )
 
+// ── Carbs estimation via Gemini ──
+data class CarbsEstimateRequest(val mealDescription: String)
+
+data class CarbsEstimateResponse(
+    val estimatedCarbsG: Int,
+    val confidence: String,
+    val breakdown: String,
+    val mealDescription: String,
+)
+
+// ── AI Bolus recommendation ──
+data class BolusRecommendationRequest(
+    /** mmol/L */
+    val currentGlucose: Double,
+    /** mmol/L change over last 30 min — positive = rising, negative = falling */
+    val glucoseTrend: Double = 0.0,
+    val bolusForCarbs: Double,
+    val correctionDose: Double,
+    val currentIob: Double,
+    val totalDose: Double,
+    val carbsG: Double,
+    /** Optional free-text description of planned physical activity */
+    val plannedActivity: String? = null,
+)
+
+data class BolusRecommendationResponse(
+    val message: String,
+    /** Clinical flags detected before calling LLM, e.g. HYPOGLYCEMIA, HIGH_IOB */
+    val safetyFlags: List<String>,
+)
+
 // ── Bolus calculation ──
 data class BolusCalculationRequest(
     val currentGlucose: Double,

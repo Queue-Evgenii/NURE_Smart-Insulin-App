@@ -43,6 +43,35 @@
                     :placeholder="t('bolus.form.mealNamePlaceholder')"
                   />
                 </ion-item>
+
+                <!-- AI carbs estimation -->
+                <ion-item lines="none">
+                  <ion-textarea
+                    v-model="mealDescription"
+                    :label="t('bolus.form.mealDescription')"
+                    label-placement="floating"
+                    :placeholder="t('bolus.form.mealDescriptionPlaceholder')"
+                    :rows="2"
+                    auto-grow
+                  />
+                </ion-item>
+                <ion-item lines="none" class="ai-estimate-row">
+                  <ion-button
+                    slot="end"
+                    size="small"
+                    fill="outline"
+                    :disabled="estimatingCarbs || !mealDescription.trim()"
+                    @click="estimateCarbs"
+                  >
+                    <ion-spinner v-if="estimatingCarbs" name="crescent" slot="start" />
+                    <ion-icon v-else :icon="sparkles" slot="start" />
+                    {{ t('bolus.form.estimateCarbs') }}
+                  </ion-button>
+                </ion-item>
+                <ion-note v-if="carbsBreakdown" color="medium" class="breakdown-note">
+                  {{ carbsBreakdown }}
+                </ion-note>
+
                 <ion-item>
                   <ion-input
                     v-model.number="carbsG"
@@ -140,6 +169,38 @@
             </ion-card-content>
           </ion-card>
 
+          <!-- AI Recommendation card -->
+          <ion-card v-if="result" class="recommendation-card">
+            <ion-card-header>
+              <ion-card-title>
+                <ion-icon :icon="sparkles" class="ai-icon" />
+                {{ t('bolus.recommendation.title') }}
+              </ion-card-title>
+            </ion-card-header>
+            <ion-card-content>
+              <div v-if="!recommendation && !loadingRecommendation" class="rec-placeholder">
+                <ion-button expand="block" fill="outline" @click="fetchRecommendation">
+                  {{ t('bolus.recommendation.getButton') }}
+                </ion-button>
+              </div>
+              <div v-else-if="loadingRecommendation" class="ion-text-center ion-padding">
+                <ion-spinner name="crescent" />
+                <p>{{ t('bolus.recommendation.loading') }}</p>
+              </div>
+              <div v-else-if="recommendation">
+                <ion-note
+                  v-for="flag in recommendation.safetyFlags"
+                  :key="flag"
+                  :color="flagColor(flag)"
+                  class="safety-flag"
+                >
+                  {{ t(`bolus.recommendation.flags.${flag}`, flag) }}
+                </ion-note>
+                <p class="rec-message">{{ recommendation.message }}</p>
+              </div>
+            </ion-card-content>
+          </ion-card>
+
           </div><!-- /bolus-left -->
 
           <!-- Right column: recent doses -->
@@ -184,9 +245,11 @@ import { useI18n } from 'vue-i18n';
 import {
   IonPage, IonHeader, IonToolbar, IonButtons, IonMenuButton, IonTitle, IonContent,
   IonCard, IonCardHeader, IonCardTitle, IonCardSubtitle, IonCardContent,
-  IonList, IonItem, IonLabel, IonBadge, IonInput, IonButton, IonSpinner, IonNote,
+  IonList, IonItem, IonLabel, IonBadge, IonInput, IonTextarea, IonButton,
+  IonSpinner, IonNote, IonIcon,
   toastController,
 } from '@ionic/vue';
+import { sparkles } from 'ionicons/icons';
 import { apiFetch } from '@/services/api';
 
 const { t } = useI18n();
@@ -212,10 +275,17 @@ interface InsulinDose {
 
 const currentGlucose = ref<number | null>(null);
 const mealName = ref('');
+const mealDescription = ref('');
 const carbsG = ref<number | null>(null);
 const glycemicIndex = ref<number | null>(null);
 const calculating = ref(false);
 const loggingDose = ref(false);
+const estimatingCarbs = ref(false);
+const carbsBreakdown = ref('');
+
+interface Recommendation { message: string; safetyFlags: string[] }
+const recommendation = ref<Recommendation | null>(null);
+const loadingRecommendation = ref(false);
 const result = ref<BolusResult | null>(null);
 const adjustedDose = ref<number | null>(null);
 
@@ -257,10 +327,65 @@ async function loadRecentDoses() {
   }
 }
 
+function flagColor(flag: string): string {
+  if (['HYPOGLYCEMIA', 'LARGE_DOSE'].includes(flag)) return 'danger';
+  if (['HIGH_GLUCOSE', 'HIGH_IOB', 'PHYSICAL_ACTIVITY'].includes(flag)) return 'warning';
+  return 'medium';
+}
+
+async function fetchRecommendation() {
+  if (!result.value) return;
+  loadingRecommendation.value = true;
+  recommendation.value = null;
+  try {
+    const res = await apiFetch('/api/bolus/recommendation', {
+      method: 'POST',
+      body: JSON.stringify({
+        currentGlucose: currentGlucose.value,
+        glucoseTrend: 0,
+        bolusForCarbs: result.value.bolusForCarbs,
+        correctionDose: result.value.correctionDose,
+        currentIob: result.value.currentIob,
+        totalDose: result.value.totalDose,
+        carbsG: carbsG.value ?? 0,
+        plannedActivity: null,
+      }),
+    });
+    if (res.ok) {
+      recommendation.value = await res.json();
+    }
+  } finally {
+    loadingRecommendation.value = false;
+  }
+}
+
+async function estimateCarbs() {
+  if (!mealDescription.value.trim()) return;
+  estimatingCarbs.value = true;
+  carbsBreakdown.value = '';
+  try {
+    const res = await apiFetch('/api/bolus/estimate-carbs', {
+      method: 'POST',
+      body: JSON.stringify({ mealDescription: mealDescription.value }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      carbsG.value = data.estimatedCarbsG;
+      carbsBreakdown.value = data.breakdown;
+    } else {
+      const toast = await toastController.create({ message: t('bolus.form.estimateError'), duration: 2000, color: 'danger' });
+      await toast.present();
+    }
+  } finally {
+    estimatingCarbs.value = false;
+  }
+}
+
 async function calculate() {
   if (!currentGlucose.value || carbsG.value === null) return;
   calculating.value = true;
   result.value = null;
+  recommendation.value = null;
   try {
     const res = await apiFetch('/api/bolus/calculate', {
       method: 'POST',
@@ -314,9 +439,12 @@ async function logDose() {
       const toast = await toastController.create({ message: t('bolus.result.success'), duration: 1500, color: 'success' });
       await toast.present();
       result.value = null;
+      recommendation.value = null;
       adjustedDose.value = null;
       currentGlucose.value = null;
       mealName.value = '';
+      mealDescription.value = '';
+      carbsBreakdown.value = '';
       carbsG.value = null;
       glycemicIndex.value = null;
       await loadRecentDoses();
@@ -384,4 +512,11 @@ onMounted(() => loadRecentDoses());
 .dose-units { font-weight: 600; font-size: 16px; }
 .dose-notes { font-style: italic; color: var(--ion-color-medium); }
 ion-item { --background: transparent; }
+.ai-estimate-row { --padding-start: 0; }
+.breakdown-note { display: block; padding: 4px 16px 8px; font-size: 12px; line-height: 1.4; }
+.recommendation-card { margin-top: 8px; }
+.ai-icon { margin-right: 6px; vertical-align: middle; }
+.safety-flag { display: inline-block; margin: 2px 4px 6px 0; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+.rec-message { font-size: 14px; line-height: 1.6; margin-top: 8px; white-space: pre-wrap; }
+.rec-placeholder { padding: 4px 0; }
 </style>

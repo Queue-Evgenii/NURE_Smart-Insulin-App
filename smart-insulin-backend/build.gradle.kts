@@ -41,6 +41,7 @@ dependencies {
     implementation("net.java.dev.jna:jna-platform:5.14.0")
     implementation("org.flywaydb:flyway-core")
     runtimeOnly("org.flywaydb:flyway-database-postgresql")
+    implementation("org.apache.pdfbox:pdfbox:3.0.3")
 }
 
 kotlin {
