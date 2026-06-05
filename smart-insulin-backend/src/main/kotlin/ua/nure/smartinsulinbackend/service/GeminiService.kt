@@ -92,7 +92,7 @@ class GeminiService(
     private fun detectSafetyFlags(req: BolusRecommendationRequest): List<String> {
         val flags = mutableListOf<String>()
         if (req.currentGlucose < 3.9)  flags += "HYPOGLYCEMIA"
-        if (req.currentGlucose > 13.9) flags += "HIGH_GLUCOSE"
+        if (req.currentGlucose > 10.0) flags += "HIGH_GLUCOSE"
         if (req.currentIob > 2.5)      flags += "HIGH_IOB"
         if (req.totalDose > 15.0)      flags += "LARGE_DOSE"
         if (req.totalDose == 0.0 && req.currentGlucose >= 3.9) flags += "ZERO_DOSE"

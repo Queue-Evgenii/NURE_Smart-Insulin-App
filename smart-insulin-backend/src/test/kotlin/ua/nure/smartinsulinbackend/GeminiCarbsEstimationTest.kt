@@ -1,6 +1,6 @@
 package ua.nure.smartinsulinbackend
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.databind.ObjectMapper
 import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Test
 import ua.nure.smartinsulinbackend.service.GeminiService
@@ -53,7 +53,7 @@ class GeminiCarbsEstimationTest {
         assumeTrue(apiKey != null && apiKey.isNotBlank(),
             "GEMINI_API_KEY not set — skipping Gemini integration test")
 
-        val service = GeminiService(apiKey!!, "gemini-2.0-flash", ObjectMapper())
+        val service = GeminiService(apiKey!!, "gemini-2.5-flash", ObjectMapper())
         val scenarios = loadDataset()
 
         data class Result(
@@ -70,7 +70,7 @@ class GeminiCarbsEstimationTest {
         println("\n╔══════════════════════════════════════════════════════════════╗")
         println("║       GEMINI CARBS ESTIMATION — DATASET VALIDATION          ║")
         println("╚══════════════════════════════════════════════════════════════╝")
-        println("Model   : gemini-2.0-flash")
+        println("Model   : gemini-2.5-flash")
         println("Dataset : meals_carbs_dataset.csv  (${scenarios.size} meals)")
         println()
 

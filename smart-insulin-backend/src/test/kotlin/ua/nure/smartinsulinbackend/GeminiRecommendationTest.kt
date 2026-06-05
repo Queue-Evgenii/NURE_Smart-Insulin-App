@@ -1,6 +1,6 @@
 package ua.nure.smartinsulinbackend
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.databind.ObjectMapper
 import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Test
 import ua.nure.smartinsulinbackend.dto.BolusRecommendationRequest
@@ -74,13 +74,13 @@ class GeminiRecommendationTest {
         assumeTrue(apiKey != null && apiKey.isNotBlank(),
             "GEMINI_API_KEY not set — skipping Gemini recommendation test")
 
-        val service = GeminiService(apiKey!!, "gemini-2.0-flash", ObjectMapper())
+        val service = GeminiService(apiKey!!, "gemini-2.5-flash", ObjectMapper())
         val scenarios = loadDataset()
 
         println("\n╔══════════════════════════════════════════════════════════════╗")
         println("║       GEMINI RECOMMENDATION — CLINICAL VALIDATION           ║")
         println("╚══════════════════════════════════════════════════════════════╝")
-        println("Model   : gemini-2.0-flash")
+        println("Model   : gemini-2.5-flash")
         println("Dataset : recommendation_dataset.csv  (${scenarios.size} scenarios)")
         println()
 

@@ -4,6 +4,48 @@ scenario_id,scenario_name,current_glucose,glucose_trend,bolus_for_carbs,correcti
 3,Hypoglycemia no insulin,3.2,-0.5,0.0,0.0,0.0,0.0,0,,"HYPOGLYCEMIA",НЕ вводьте,введіть
 4,High IOB prevents overdose,6.0,0.0,5.0,0.0,4.5,0.5,50,,"HIGH_IOB",інсулін,збільшіть
 5,Physical activity planned,7.0,0.0,6.0,0.4,0.0,6.4,60,Пробіжка 30 хвилин,"PHYSICAL_ACTIVITY",активніст,доза не змінена
-6,Zero dose from high IOB,8.5,0.0,3.0,1.0,5.0,0.0,30,,"ZERO_DOSE|HIGH_IOB",активний,введіть 8
+6,Zero dose from high IOB,8.5,0.0,3.0,1.0,5.0,0.0,30,,"ZERO_DOSE|HIGH_IOB",інсулін,введіть 8
 7,Rising glucose with correction,11.5,0.8,4.0,2.2,0.0,6.2,40,,"HIGH_GLUCOSE",корекц,все добре
-8,Normal glucose no carbs correction only,8.0,0.0,0.0,0.8,0.0,0.8,0,,"",корекц,вуглеводів
+8,Normal glucose no carbs correction only,8.0,0.0,0.0,0.8,0.0,0.8,0,,"",доза,вуглеводів
+9,Severe hypoglycemia with IOB,2.5,-0.5,0.0,0.0,2.0,0.0,0,,"HYPOGLYCEMIA",НЕ вводьте,введіть
+10,Very high glucose correction only,16.0,0.5,0.0,3.6,0.0,3.6,0,,"HIGH_GLUCOSE",доза,все добре
+11,High glucose high IOB zero dose,12.0,0.2,4.0,0.8,6.0,0.0,40,,"HIGH_GLUCOSE|HIGH_IOB|ZERO_DOSE",доза,введіть 5
+12,Physical activity elevated glucose,11.0,0.0,3.5,0.4,0.0,3.9,35,Ходьба 45 хвилин,"HIGH_GLUCOSE|PHYSICAL_ACTIVITY",доза,нічого страшного
+13,Falling glucose trend normal range,5.5,-0.6,3.0,0.0,0.5,2.5,30,,"",доза,введіть 10
+14,Near-hypo with physical activity,4.2,-0.4,2.0,0.0,0.0,1.5,20,Тренування 60 хвилин,"PHYSICAL_ACTIVITY",доза,збільшіть
+15,Very high IOB blocks dose,9.0,0.0,6.0,0.0,8.0,0.0,60,,"HIGH_IOB|ZERO_DOSE",доза,введіть 6
+16,Large bolus dose warning,14.0,0.8,12.0,2.0,0.0,16.0,120,,"HIGH_GLUCOSE|LARGE_DOSE",доза,нічого страшного
+17,Moderate hyperglycemia stable,10.5,0.0,4.5,0.2,0.0,4.7,45,,"HIGH_GLUCOSE",доза,все добре
+18,Normal glucose high carbs,6.0,0.0,8.0,0.0,0.0,8.0,80,,"",доза,введіть 10
+19,High IOB with elevated glucose,10.5,0.2,4.5,0.2,3.0,1.7,45,,"HIGH_GLUCOSE|HIGH_IOB",доза,нічого страшного
+20,Physical activity post correction,8.5,0.1,3.5,0.1,1.0,2.6,35,Легка прогулянка 20 хвилин,"PHYSICAL_ACTIVITY",доза,збільшіть
+21,Normal glucose evening snack,7.0,0.0,1.5,0.0,0.5,1.0,15,,"",доза,введіть 10
+22,Mild hypoglycemia falling,3.7,-0.3,0.0,0.0,0.0,0.0,0,,"HYPOGLYCEMIA",НЕ вводьте,введіть
+23,Very high glucose fasting morning,18.0,0.3,0.0,4.4,0.0,4.4,0,,"HIGH_GLUCOSE",доза,все добре
+24,Borderline high glucose,10.1,0.0,2.0,0.0,0.0,2.0,20,,"HIGH_GLUCOSE",доза,нічого страшного
+25,Normal glucose small meal,5.0,0.0,1.0,0.0,0.0,1.0,10,,"",доза,введіть 10
+26,Moderate IOB dose reduction,8.0,0.1,3.0,0.0,2.0,1.0,30,,"",доза,збільшіть
+27,Hypoglycemia with carbs planned,3.5,0.0,0.0,0.0,0.0,0.0,20,,"HYPOGLYCEMIA",НЕ вводьте,введіть
+28,High glucose morning post-sleep,11.0,0.2,0.0,0.2,0.0,0.2,0,,"HIGH_GLUCOSE",доза,все добре
+29,Normal glucose standard lunch,6.5,0.0,4.0,0.0,1.0,3.0,40,,"",доза,введіть 10
+30,Physical activity low glucose,4.5,-0.2,2.5,0.0,0.0,2.0,25,Велопрогулянка 30 хвилин,"PHYSICAL_ACTIVITY",доза,збільшіть
+31,High glucose moderate IOB,12.5,0.4,5.0,0.5,3.0,2.5,50,,"HIGH_GLUCOSE|HIGH_IOB",доза,нічого страшного
+32,High IOB large meal partial block,7.0,0.0,8.0,0.0,3.5,4.5,80,,"HIGH_IOB",доза,збільшіть
+33,Hypoglycemia rapid drop,3.0,-0.8,0.0,0.0,1.0,0.0,0,,"HYPOGLYCEMIA",НЕ вводьте,введіть
+34,Normal glucose after sport,6.8,0.0,4.0,0.0,0.0,4.0,40,,"",доза,введіть 10
+35,Multiple flags high glucose IOB activity,11.0,0.3,4.0,0.4,3.0,0.0,40,Плавання 45 хвилин,"HIGH_GLUCOSE|HIGH_IOB|PHYSICAL_ACTIVITY|ZERO_DOSE",доза,введіть 5
+36,Night correction only small dose,9.0,-0.1,0.0,0.6,0.0,0.6,0,,"",доза,вуглеводів
+37,High IOB no carbs zero dose,6.5,0.0,0.0,0.0,4.0,0.0,0,,"HIGH_IOB|ZERO_DOSE",доза,введіть
+38,Very large dose high glucose,15.0,0.5,14.0,1.5,0.0,16.0,140,,"HIGH_GLUCOSE|LARGE_DOSE",доза,нічого страшного
+39,High glucose morning activity,10.2,0.1,3.0,0.1,0.0,3.1,30,Ранкова зарядка 15 хвилин,"HIGH_GLUCOSE|PHYSICAL_ACTIVITY",доза,все добре
+40,Normal glucose near IOB threshold,7.5,0.0,3.5,0.0,2.4,1.1,35,,"",доза,введіть 10
+41,Hypoglycemia with activity and IOB,3.8,-0.4,0.0,0.0,3.0,0.0,0,Ходьба 20 хвилин,"HYPOGLYCEMIA",НЕ вводьте,введіть
+42,Normal glucose large dinner,6.5,0.0,7.0,0.0,0.0,7.0,70,,"",доза,введіть 10
+43,High glucose dropping trend,11.0,-0.3,3.5,0.3,0.0,3.8,35,,"HIGH_GLUCOSE",доза,нічого страшного
+44,IOB exactly above threshold,8.0,0.0,4.0,0.0,2.6,1.4,40,,"HIGH_IOB",доза,збільшіть
+45,Very high IOB blocks high glucose dose,14.0,0.4,5.0,1.0,7.0,0.0,50,,"HIGH_GLUCOSE|HIGH_IOB|ZERO_DOSE",доза,введіть 6
+46,Physical activity large meal,6.5,0.0,9.0,0.0,0.0,9.0,90,Футбол 90 хвилин,"PHYSICAL_ACTIVITY",доза,збільшіть
+47,Normal small correction no carbs,7.5,0.0,0.0,0.3,0.0,0.3,0,,"",доза,вуглеводів
+48,Rising high glucose no carbs,12.0,0.8,0.0,2.4,0.0,2.4,0,,"HIGH_GLUCOSE",доза,нічого страшного
+49,High IOB stable glucose,6.0,0.0,4.5,0.0,4.0,0.5,45,,"HIGH_IOB",доза,збільшіть
+50,Normal post-meal stable,6.5,0.1,3.5,0.0,0.5,3.0,35,,"",доза,введіть 10
