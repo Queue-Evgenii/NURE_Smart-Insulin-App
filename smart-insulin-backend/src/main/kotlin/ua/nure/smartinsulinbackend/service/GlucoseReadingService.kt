@@ -1,6 +1,5 @@
 package ua.nure.smartinsulinbackend.service
 
-import com.sun.jna.NativeLong
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Service
@@ -63,7 +62,7 @@ class GlucoseReadingService(
         }
 
         val values = readings.map { it.glucoseValue }.toDoubleArray()
-        val hba1c = hbA1cLibrary.calculate_hba1c_pure(values, NativeLong(values.size.toLong()))
+        val hba1c = hbA1cLibrary.calculate_hba1c_pure(values, values.size.toLong())
         val avg = values.average()
 
         return HbA1cResponse(

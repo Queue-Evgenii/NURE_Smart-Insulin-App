@@ -11,4 +11,9 @@ interface InsulinDoseRepository : JpaRepository<InsulinDose, Long> {
     fun findByUserIdAndInjectedAtBetweenOrderByInjectedAtAsc(
         userId: Long, from: Instant, to: Instant
     ): List<InsulinDose>
+
+    /** Doses since a given moment — used to derive adaptive ICR/ISF (section 2.1.1). */
+    fun findByUserIdAndInjectedAtAfterOrderByInjectedAtAsc(
+        userId: Long, after: Instant
+    ): List<InsulinDose>
 }

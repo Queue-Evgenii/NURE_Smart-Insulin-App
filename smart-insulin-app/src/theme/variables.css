@@ -6,6 +6,12 @@ http://ionicframework.com/docs/theming/ */
   --app-breakpoint-md: 768px;
 }
 
+@media (prefers-color-scheme: dark) {
+  ion-card {
+    --background: rgba(255, 255, 255, 0.08);
+  }
+}
+
 /* Constrain and center content on wide screens */
 .page-wrapper {
   max-width: var(--app-max-width);

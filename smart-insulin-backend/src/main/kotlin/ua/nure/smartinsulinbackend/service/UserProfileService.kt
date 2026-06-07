@@ -33,6 +33,8 @@ class UserProfileService(
             durationOfInsulinAction = profile?.durationOfInsulinAction,
             basalInsulinType = profile?.basalInsulinType,
             bolusInsulinType = profile?.bolusInsulinType,
+            usingAdaptiveCoefficients = profile?.usingAdaptiveCoefficients ?: false,
+            lastCoefficientUpdate = profile?.lastCoefficientUpdate,
         )
     }
 
@@ -63,6 +65,8 @@ class UserProfileService(
                 durationOfInsulinAction = request.durationOfInsulinAction ?: existing.durationOfInsulinAction,
                 basalInsulinType = request.basalInsulinType ?: existing.basalInsulinType,
                 bolusInsulinType = request.bolusInsulinType ?: existing.bolusInsulinType,
+                lastCoefficientUpdate = existing.lastCoefficientUpdate,
+                usingAdaptiveCoefficients = existing.usingAdaptiveCoefficients,
                 createdAt = existing.createdAt,
                 updatedAt = Instant.now(),
             )

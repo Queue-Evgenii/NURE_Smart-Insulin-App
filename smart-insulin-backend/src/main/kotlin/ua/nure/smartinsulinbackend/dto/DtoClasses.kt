@@ -53,6 +53,9 @@ data class UserProfileResponse(
     val durationOfInsulinAction: Double?,
     val basalInsulinType: String?,
     val bolusInsulinType: String?,
+    /** true when ICR/ISF were derived from the patient's own history (section 2.1.1) */
+    val usingAdaptiveCoefficients: Boolean = false,
+    val lastCoefficientUpdate: Instant? = null,
 )
 
 data class UserProfileUpdateRequest(
@@ -144,17 +147,65 @@ data class BolusRecommendationResponse(
 )
 
 // ── Bolus calculation ──
+
+/** Planned physical activity used to lower the dose (section 2.1.2). */
+data class ActivityInput(
+    /** AEROBIC | ANAEROBIC | MIXED */
+    val type: String,
+    /** LIGHT | MODERATE | HIGH | MAXIMAL */
+    val intensity: String,
+    /** Minutes between the injection and the start of activity */
+    val minutesUntilStart: Int = 0,
+    /** Planned activity duration in minutes */
+    val durationMinutes: Int = 0,
+)
+
 data class BolusCalculationRequest(
     val currentGlucose: Double,
     val carbsG: Double,
     val mealRecordId: Long? = null,
+    val activity: ActivityInput? = null,
 )
 
 data class BolusCalculationResponse(
     val bolusForCarbs: Double,
     val correctionDose: Double,
     val currentIob: Double,
+    /** Base dose before any activity adjustment */
     val totalDose: Double,
     val mealRecordId: Long?,
     val missingParams: List<String>,
+    /** true when ICR/ISF were derived from patient history (section 2.1.1) */
+    val usingAdaptiveCoefficients: Boolean = false,
+    /** Activity-adjusted dose; equals totalDose when no activity was supplied (section 2.1.2) */
+    val adjustedDose: Double? = null,
+    val activityFactor: Double? = null,
+    val timeFactor: Double? = null,
+    val durationFactor: Double? = null,
+    val activityWarning: String? = null,
+)
+
+// ── Glucose forecasting (section 2.2) ──
+data class ForecastRequest(
+    /** Carbohydrates recently consumed and still being absorbed (g) */
+    val carbsOnBoard: Double = 0.0,
+    /** Forecast horizon in minutes; defaults to 3 hours */
+    val horizonMinutes: Int = 180,
+)
+
+data class ForecastPoint(
+    val minutesAhead: Int,
+    val predicted: Double,
+    val lower: Double,
+    val upper: Double,
+)
+
+data class ForecastResponse(
+    val currentGlucose: Double,
+    /** mmol/L per minute; negative = falling */
+    val trendPerMinute: Double,
+    val points: List<ForecastPoint>,
+    /** e.g. HYPO_RISK, HYPER_RISK, LOW_CONFIDENCE */
+    val riskFlags: List<String>,
+    val readingsUsed: Int,
 )

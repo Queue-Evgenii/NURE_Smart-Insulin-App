@@ -18,6 +18,7 @@ class BolusCalculationService(
     private val userProfileRepository: UserProfileRepository,
     private val insulinDoseRepository: InsulinDoseRepository,
     private val hbA1cLibrary: HbA1cLibrary,
+    private val activityAdjustmentService: ActivityAdjustmentService,
 ) {
 
     fun calculate(user: User, request: BolusCalculationRequest): BolusCalculationResponse {
@@ -60,6 +61,9 @@ class BolusCalculationService(
 
         val totalDose = max(0.0, bolusForCarbs + correctionDose - currentIob)
 
+        // Activity-based correction (section 2.1.2) — lowers the dose for planned exercise.
+        val adjustment = activityAdjustmentService.adjust(totalDose, request.activity)
+
         return BolusCalculationResponse(
             bolusForCarbs = round1(bolusForCarbs),
             correctionDose = round1(correctionDose),
@@ -67,6 +71,12 @@ class BolusCalculationService(
             totalDose = round1(totalDose),
             mealRecordId = request.mealRecordId,
             missingParams = missingParams,
+            usingAdaptiveCoefficients = profile?.usingAdaptiveCoefficients ?: false,
+            adjustedDose = adjustment?.adjustedDose ?: round1(totalDose),
+            activityFactor = adjustment?.activityFactor,
+            timeFactor = adjustment?.timeFactor,
+            durationFactor = adjustment?.durationFactor,
+            activityWarning = adjustment?.warning,
         )
     }
 

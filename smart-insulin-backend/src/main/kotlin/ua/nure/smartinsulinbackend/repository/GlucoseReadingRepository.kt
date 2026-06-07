@@ -11,4 +11,12 @@ interface GlucoseReadingRepository : JpaRepository<GlucoseReading, Long> {
     fun findByUserIdAndMeasuredAtBetweenOrderByMeasuredAtAsc(
         userId: Long, from: Instant, to: Instant
     ): List<GlucoseReading>
+
+    /** Earliest reading within a window — used to auto-detect post-prandial glucose (~3h after a dose). */
+    fun findFirstByUserIdAndMeasuredAtBetweenOrderByMeasuredAtAsc(
+        userId: Long, from: Instant, to: Instant
+    ): GlucoseReading?
+
+    /** Most recent readings, newest first — used for trend estimation in forecasting. */
+    fun findTop12ByUserIdOrderByMeasuredAtDesc(userId: Long): List<GlucoseReading>
 }

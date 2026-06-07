@@ -95,6 +95,60 @@
                     max="100"
                   />
                 </ion-item>
+
+                <!-- Activity adjustment (section 2.1.2) -->
+                <ion-item>
+                  <ion-select
+                    v-model="activityType"
+                    :label="t('bolus.form.activityType')"
+                    label-placement="floating"
+                    placeholder="—"
+                    :interface-options="{ mode: 'ios' }"
+                  >
+                    <ion-select-option value="">{{ t('common.none') }}</ion-select-option>
+                    <ion-select-option value="AEROBIC">{{ t('bolus.form.activityAerobic') }}</ion-select-option>
+                    <ion-select-option value="ANAEROBIC">{{ t('bolus.form.activityAnaerobic') }}</ion-select-option>
+                    <ion-select-option value="MIXED">{{ t('bolus.form.activityMixed') }}</ion-select-option>
+                  </ion-select>
+                </ion-item>
+                <ion-item v-if="activityType">
+                  <ion-select
+                    v-model="activityIntensity"
+                    :label="t('bolus.form.activityIntensity')"
+                    label-placement="floating"
+                    placeholder="—"
+                    :interface-options="{ mode: 'ios' }"
+                  >
+                    <ion-select-option value="LIGHT">{{ t('bolus.form.activityLight') }}</ion-select-option>
+                    <ion-select-option value="MODERATE">{{ t('bolus.form.activityModerate') }}</ion-select-option>
+                    <ion-select-option value="HIGH">{{ t('bolus.form.activityHigh') }}</ion-select-option>
+                    <ion-select-option value="MAXIMAL">{{ t('bolus.form.activityMaximal') }}</ion-select-option>
+                  </ion-select>
+                </ion-item>
+                <ion-item v-if="activityType">
+                  <ion-input
+                    v-model.number="minutesUntilActivity"
+                    type="number"
+                    :label="t('bolus.form.activityMinutes')"
+                    label-placement="floating"
+                    placeholder="0"
+                    step="5"
+                    min="0"
+                    max="480"
+                  />
+                </ion-item>
+                <ion-item v-if="activityType">
+                  <ion-input
+                    v-model.number="activityDurationMinutes"
+                    type="number"
+                    :label="t('bolus.form.activityDuration')"
+                    label-placement="floating"
+                    placeholder="30"
+                    step="5"
+                    min="5"
+                    max="300"
+                  />
+                </ion-item>
               </ion-list>
 
               <ion-button
@@ -116,7 +170,13 @@
             </ion-card-header>
             <ion-card-content>
               <div class="dose-result">
-                <div class="dose-total">{{ result.totalDose.toFixed(1) }} {{ t('common.unitInsulin') }}</div>
+                <div class="dose-total" :class="result.activityFactor ? 'adjusted' : ''">
+                  {{ (result.adjustedDose || result.totalDose).toFixed(1) }} {{ t('common.unitInsulin') }}
+                </div>
+                <div v-if="result.activityFactor" class="activity-factors">
+                  <small>{{ t('bolus.result.baselineDose', { dose: result.totalDose.toFixed(1) }) }}</small>
+                  <small>{{ t('bolus.result.activityFactor', { f: (result.activityFactor * 100).toFixed(0), t: (result.timeFactor * 100).toFixed(0), d: (result.durationFactor * 100).toFixed(0) }) }}</small>
+                </div>
                 <div class="dose-breakdown">
                   <div class="breakdown-row">
                     <span>{{ t('bolus.result.carbDose') }}</span>
@@ -141,6 +201,9 @@
 
               <ion-note v-if="result.missingParams.length > 0" color="warning" class="missing-note">
                 {{ t('bolus.result.missingParams', { params: result.missingParams.join(', ') }) }}
+              </ion-note>
+              <ion-note v-if="result.activityWarning" color="warning" class="activity-warning-note">
+                ⚠️ {{ result.activityWarning }}
               </ion-note>
 
               <ion-list lines="none" class="ion-margin-top">
@@ -246,7 +309,7 @@ import {
   IonPage, IonHeader, IonToolbar, IonButtons, IonMenuButton, IonTitle, IonContent,
   IonCard, IonCardHeader, IonCardTitle, IonCardSubtitle, IonCardContent,
   IonList, IonItem, IonLabel, IonBadge, IonInput, IonTextarea, IonButton,
-  IonSpinner, IonNote, IonIcon,
+  IonSpinner, IonNote, IonIcon, IonSelect, IonSelectOption,
   toastController,
 } from '@ionic/vue';
 import { sparkles } from 'ionicons/icons';
@@ -261,6 +324,12 @@ interface BolusResult {
   totalDose: number;
   mealRecordId: number | null;
   missingParams: string[];
+  adjustedDose: number | null;
+  usingAdaptiveCoefficients: boolean;
+  activityFactor: number | null;
+  timeFactor: number | null;
+  durationFactor: number | null;
+  activityWarning: string | null;
 }
 
 interface InsulinDose {
@@ -282,6 +351,12 @@ const calculating = ref(false);
 const loggingDose = ref(false);
 const estimatingCarbs = ref(false);
 const carbsBreakdown = ref('');
+
+// Activity adjustment (section 2.1.2)
+const activityType = ref('');  // AEROBIC | ANAEROBIC | MIXED
+const activityIntensity = ref('');  // LIGHT | MODERATE | HIGH | MAXIMAL
+const minutesUntilActivity = ref(0);
+const activityDurationMinutes = ref(0);
 
 interface Recommendation { message: string; safetyFlags: string[] }
 const recommendation = ref<Recommendation | null>(null);
@@ -387,13 +462,22 @@ async function calculate() {
   result.value = null;
   recommendation.value = null;
   try {
+    const body: any = { currentGlucose: currentGlucose.value, carbsG: carbsG.value };
+    if (activityType.value || activityIntensity.value) {
+      body.activity = {
+        type: activityType.value,
+        intensity: activityIntensity.value,
+        minutesUntilStart: minutesUntilActivity.value || 0,
+        durationMinutes: activityDurationMinutes.value || 0,
+      };
+    }
     const res = await apiFetch('/api/bolus/calculate', {
       method: 'POST',
-      body: JSON.stringify({ currentGlucose: currentGlucose.value, carbsG: carbsG.value }),
+      body: JSON.stringify(body),
     });
     if (res.ok) {
       result.value = await res.json();
-      adjustedDose.value = result.value!.totalDose;
+      adjustedDose.value = result.value!.adjustedDose || result.value!.totalDose;
     } else {
       const toast = await toastController.create({ message: t('bolus.form.errorCalc'), duration: 2000, color: 'danger' });
       await toast.present();
@@ -481,6 +565,19 @@ onMounted(() => loadRecentDoses());
   font-weight: 700;
   color: var(--ion-color-primary);
   line-height: 1.1;
+  transition: color 0.3s ease;
+}
+.dose-total.adjusted {
+  color: var(--ion-color-warning);
+}
+
+.activity-factors {
+  font-size: 12px;
+  color: var(--ion-color-medium);
+  margin-top: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .dose-breakdown {
@@ -509,6 +606,7 @@ onMounted(() => loadRecentDoses());
 
 .timing-note { display: block; margin-top: 12px; font-size: 13px; font-weight: 500; }
 .missing-note { display: block; margin-top: 8px; font-size: 13px; }
+.activity-warning-note { display: block; margin-top: 8px; font-size: 13px; }
 .dose-units { font-weight: 600; font-size: 16px; }
 .dose-notes { font-style: italic; color: var(--ion-color-medium); }
 ion-item { --background: transparent; }

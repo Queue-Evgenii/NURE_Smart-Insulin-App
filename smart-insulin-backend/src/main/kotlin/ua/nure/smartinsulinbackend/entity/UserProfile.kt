@@ -40,6 +40,13 @@ class UserProfile(
     /** Тип болюсного інсуліну (напр. NovoRapid, Humalog) */
     val bolusInsulinType: String? = null,
 
+    /** Коли востаннє перераховувались адаптивні коефіцієнти ICR/ISF (розділ 2.1.1) */
+    val lastCoefficientUpdate: Instant? = null,
+
+    /** true, коли коефіцієнти обчислені з історії пацієнта, а не з правил 100/500 */
+    @Column(nullable = false)
+    val usingAdaptiveCoefficients: Boolean = false,
+
     @Column(nullable = false, updatable = false)
     val createdAt: Instant = Instant.now(),
 
