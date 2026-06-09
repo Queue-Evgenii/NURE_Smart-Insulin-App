@@ -2,6 +2,8 @@ package ua.nure.smartinsulinbackend.service
 
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import tools.jackson.databind.ObjectMapper
+import ua.nure.smartinsulinbackend.dto.ActivityCoefficientsDto
 import ua.nure.smartinsulinbackend.dto.BolusCalculationRequest
 import ua.nure.smartinsulinbackend.dto.BolusCalculationResponse
 import ua.nure.smartinsulinbackend.entity.User
@@ -19,16 +21,33 @@ class BolusCalculationService(
     private val insulinDoseRepository: InsulinDoseRepository,
     private val hbA1cLibrary: HbA1cLibrary,
     private val activityAdjustmentService: ActivityAdjustmentService,
+    private val mapper: ObjectMapper,
 ) {
 
     fun calculate(user: User, request: BolusCalculationRequest): BolusCalculationResponse {
         val profile = userProfileRepository.findByUserId(user.id).orElse(null)
 
+        // ── ISF / ICR: manual → weight-based estimate (1700/500 rules) → missing ──────
+        val weightKg = profile?.weightKg
+        val tddEstimate = weightKg?.let { it * 0.5 }   // 0.5 U/kg — conservative T1DM start
+
         val missingParams = mutableListOf<String>()
+        var usingWeightEstimation = false
+
         val insulinToCarbRatio = profile?.insulinToCarbRatio
+            ?: tddEstimate?.let { tdd ->
+                usingWeightEstimation = true
+                500.0 / tdd           // 500 rule (Walsh & Roberts)
+            }
             ?: run { missingParams += "insulinToCarbRatio"; null }
+
         val insulinSensitivityFactor = profile?.insulinSensitivityFactor
+            ?: tddEstimate?.let { tdd ->
+                usingWeightEstimation = true
+                94.0 / tdd            // 1700 rule converted to mmol/L (÷18)
+            }
             ?: run { missingParams += "insulinSensitivityFactor"; null }
+
         val targetGlucoseMin = profile?.targetGlucoseMin
             ?: run { missingParams += "targetGlucoseMin"; null }
         val targetGlucoseMax = profile?.targetGlucoseMax
@@ -46,7 +65,6 @@ class BolusCalculationService(
             (request.currentGlucose - targetMid) / insulinSensitivityFactor
         } else 0.0
 
-        // Sum active insulin from all doses injected within the DIA window
         val currentIob = if (durationOfInsulinAction != null && durationOfInsulinAction > 0) {
             val diaMins = durationOfInsulinAction * 60.0
             val windowStart = Instant.now().minusSeconds((diaMins * 60).roundToLong())
@@ -59,24 +77,29 @@ class BolusCalculationService(
             }
         } else 0.0
 
-        val totalDose = max(0.0, bolusForCarbs + correctionDose - currentIob)
+        val resistanceFactor = profile?.insulinResistanceFactor ?: 1.0
+        val totalDose = max(0.0, (bolusForCarbs + correctionDose - currentIob) * resistanceFactor)
 
-        // Activity-based correction (section 2.1.2) — lowers the dose for planned exercise.
-        val adjustment = activityAdjustmentService.adjust(totalDose, request.activity)
+        val coefficients = profile?.activityCoefficients
+            ?.let { runCatching { mapper.readValue(it, ActivityCoefficientsDto::class.java) }.getOrNull() }
+            ?: ActivityCoefficientsDto.DEFAULT
+
+        val adjustment = activityAdjustmentService.adjust(totalDose, request.activity, coefficients)
 
         return BolusCalculationResponse(
-            bolusForCarbs = round1(bolusForCarbs),
-            correctionDose = round1(correctionDose),
-            currentIob = round1(currentIob),
-            totalDose = round1(totalDose),
-            mealRecordId = request.mealRecordId,
-            missingParams = missingParams,
+            bolusForCarbs     = round1(bolusForCarbs),
+            correctionDose    = round1(correctionDose),
+            currentIob        = round1(currentIob),
+            totalDose         = round1(totalDose),
+            mealRecordId      = request.mealRecordId,
+            missingParams     = missingParams,
             usingAdaptiveCoefficients = profile?.usingAdaptiveCoefficients ?: false,
-            adjustedDose = adjustment?.adjustedDose ?: round1(totalDose),
-            activityFactor = adjustment?.activityFactor,
-            timeFactor = adjustment?.timeFactor,
-            durationFactor = adjustment?.durationFactor,
-            activityWarning = adjustment?.warning,
+            adjustedDose      = adjustment?.adjustedDose ?: round1(totalDose),
+            activityFactor    = adjustment?.activityFactor,
+            timeFactor        = adjustment?.timeFactor,
+            durationFactor    = adjustment?.durationFactor,
+            activityWarning   = adjustment?.warning,
+            usingWeightEstimation = usingWeightEstimation,
         )
     }
 

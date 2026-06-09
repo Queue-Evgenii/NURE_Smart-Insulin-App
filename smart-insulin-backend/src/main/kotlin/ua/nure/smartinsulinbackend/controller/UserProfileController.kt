@@ -1,5 +1,6 @@
 package ua.nure.smartinsulinbackend.controller
 
+import jakarta.validation.Valid
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.*
 import ua.nure.smartinsulinbackend.dto.UserProfileResponse
@@ -22,7 +23,7 @@ class UserProfileController(
     @PutMapping
     fun updateProfile(
         @AuthenticationPrincipal user: User,
-        @RequestBody request: UserProfileUpdateRequest,
+        @Valid @RequestBody request: UserProfileUpdateRequest,
     ): UserProfileResponse =
         userProfileService.updateProfile(user, request)
 

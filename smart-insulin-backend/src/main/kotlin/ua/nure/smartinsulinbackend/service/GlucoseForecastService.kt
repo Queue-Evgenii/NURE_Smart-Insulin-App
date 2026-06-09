@@ -9,9 +9,9 @@ import ua.nure.smartinsulinbackend.entity.User
 import ua.nure.smartinsulinbackend.library.HbA1cLibrary
 import ua.nure.smartinsulinbackend.repository.GlucoseReadingRepository
 import ua.nure.smartinsulinbackend.repository.InsulinDoseRepository
+import ua.nure.smartinsulinbackend.repository.MealRecordRepository
 import ua.nure.smartinsulinbackend.repository.UserProfileRepository
 import java.time.Instant
-import kotlin.math.min
 import kotlin.math.roundToLong
 
 /**
@@ -29,11 +29,11 @@ class GlucoseForecastService(
     private val glucoseReadingRepository: GlucoseReadingRepository,
     private val insulinDoseRepository: InsulinDoseRepository,
     private val userProfileRepository: UserProfileRepository,
+    private val mealRecordRepository: MealRecordRepository,
     private val hbA1cLibrary: HbA1cLibrary,
 ) {
-    private val trendWindowMinutes = 45L          // readings considered for the trend slope
-    private val stepMinutes = 30                  // forecast granularity
-    private val carbAbsorptionMinutes = 120.0     // total carb absorption time
+    private val trendWindowMinutes = 45L
+    private val stepMinutes = 30
     private val hypoThreshold = 3.9
     private val hyperThreshold = 10.0
     private val minReadingsForConfidence = 3
@@ -71,11 +71,23 @@ class GlucoseForecastService(
 
         // Clinical parameters (trend-only forecast when they are absent).
         val profile = userProfileRepository.findByUserId(user.id).orElse(null)
-        val isf = profile?.insulinSensitivityFactor ?: 0.0
-        val icr = profile?.insulinToCarbRatio ?: 0.0
+        val tddEstimate = profile?.weightKg?.let { it * 0.5 }
+        val isf = profile?.insulinSensitivityFactor
+            ?: tddEstimate?.let { 94.0 / it }
+            ?: 0.0
+        val icr = profile?.insulinToCarbRatio
+            ?: tddEstimate?.let { 500.0 / it }
+            ?: 0.0
         val diaMin = (profile?.durationOfInsulinAction ?: 0.0) * 60.0
+        val carbAbsorptionMinutes = (profile?.carbAbsorptionMinutes ?: 120).toDouble()
         val iob = if (diaMin > 0.0) currentIob(user.id, diaMin) else 0.0
-        val carbsOnBoard = request.carbsOnBoard
+        // If the client did not supply carbsOnBoard, derive it from meals eaten within the
+        // absorption window — linear decay: COB = carbs × (1 − t / carbAbsorptionMinutes).
+        val carbsOnBoard = if (request.carbsOnBoard > 0.0) {
+            request.carbsOnBoard
+        } else {
+            currentCob(user.id, anchor, carbAbsorptionMinutes)
+        }
 
         val horizon = request.horizonMinutes.coerceIn(stepMinutes, 360)
         val riskFlags = mutableSetOf<String>()
@@ -93,8 +105,8 @@ class GlucoseForecastService(
             val lower = (predicted - band).coerceAtLeast(1.0)
             val upper = predicted + band
 
-            if (lower < hypoThreshold) riskFlags += "HYPO_RISK"
-            if (predicted > hyperThreshold) riskFlags += "HYPER_RISK"
+            if (predicted < hypoThreshold) riskFlags += "HYPO_RISK"
+            else if (predicted > hyperThreshold) riskFlags += "HYPER_RISK"
 
             points.add(ForecastPoint(
                 minutesAhead = h,
@@ -112,6 +124,17 @@ class GlucoseForecastService(
             riskFlags = riskFlags.toList(),
             readingsUsed = recent.size,
         )
+    }
+
+    private fun currentCob(userId: Long, anchor: Instant, carbAbsorptionMinutes: Double): Double {
+        val windowStart = anchor.minusSeconds((carbAbsorptionMinutes * 60).toLong())
+        return mealRecordRepository
+            .findByUserIdAndMealTimeBetweenOrderByMealTimeAsc(userId, windowStart, anchor)
+            .sumOf { meal ->
+                val minutesAgo = (anchor.epochSecond - meal.mealTime.epochSecond) / 60.0
+                val remaining = 1.0 - minutesAgo / carbAbsorptionMinutes
+                meal.carbohydratesG * remaining.coerceAtLeast(0.0)
+            }
     }
 
     private fun currentIob(userId: Long, diaMin: Double): Double {

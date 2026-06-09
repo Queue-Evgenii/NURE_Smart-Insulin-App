@@ -34,6 +34,28 @@ class UserProfile(
     /** Тривалість дії інсуліну (год), зазвичай 3–8 */
     val durationOfInsulinAction: Double? = null,
 
+    /**
+     * Множник дози при інсулінорезистентності.
+     * 1.0 = норма; >1.0 — знижена чутливість (більше інсуліну); <1.0 — підвищена.
+     * Діапазон: 0.5–5.0.
+     */
+    @Column(nullable = false)
+    val insulinResistanceFactor: Double = 1.0,
+
+    /**
+     * Час повного всмоктування вуглеводів (хв). Впливає на прогноз і COB.
+     * Діапазон: 60–240 хв, за замовчуванням 120.
+     */
+    @Column(nullable = false)
+    val carbAbsorptionMinutes: Int = 120,
+
+    /**
+     * Персоналізована таблиця коефіцієнтів активності (JSON).
+     * NULL — використовуються клінічні значення за замовчуванням.
+     */
+    @Column(columnDefinition = "jsonb")
+    val activityCoefficients: String? = null,
+
     /** Тип базального інсуліну (напр. Lantus, Tresiba) */
     val basalInsulinType: String? = null,
 

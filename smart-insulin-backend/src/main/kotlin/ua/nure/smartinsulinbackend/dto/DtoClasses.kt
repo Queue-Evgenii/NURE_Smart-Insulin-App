@@ -1,5 +1,9 @@
 package ua.nure.smartinsulinbackend.dto
 
+import jakarta.validation.constraints.DecimalMax
+import jakarta.validation.constraints.DecimalMin
+import jakarta.validation.constraints.Max
+import jakarta.validation.constraints.Min
 import java.time.Instant
 
 // ── Auth ──
@@ -51,6 +55,11 @@ data class UserProfileResponse(
     val targetGlucoseMin: Double?,
     val targetGlucoseMax: Double?,
     val durationOfInsulinAction: Double?,
+    val insulinResistanceFactor: Double = 1.0,
+    val carbAbsorptionMinutes: Int = 120,
+    val activityCoefficients: ActivityCoefficientsDto = ActivityCoefficientsDto.DEFAULT,
+    /** true when ISF/ICR were estimated from weight (1700/500 rules), not set manually */
+    val usingWeightEstimation: Boolean = false,
     val basalInsulinType: String?,
     val bolusInsulinType: String?,
     /** true when ICR/ISF were derived from the patient's own history (section 2.1.1) */
@@ -61,16 +70,84 @@ data class UserProfileResponse(
 data class UserProfileUpdateRequest(
     val fullName: String?,
     val diabetesType: Int?,
+
+    @field:DecimalMin("20.0", message = "Вага повинна бути ≥ 20 кг")
+    @field:DecimalMax("300.0", message = "Вага повинна бути ≤ 300 кг")
     val weightKg: Double?,
+
+    @field:DecimalMin("50.0", message = "Зріст повинен бути ≥ 50 см")
+    @field:DecimalMax("250.0", message = "Зріст повинен бути ≤ 250 см")
     val heightCm: Double?,
+
+    @field:DecimalMin("0.5", message = "ISF повинен бути ≥ 0.5 ммоль/л/Од")
+    @field:DecimalMax("20.0", message = "ISF повинен бути ≤ 20.0 ммоль/л/Од")
     val insulinSensitivityFactor: Double?,
+
+    @field:DecimalMin("1.0", message = "ICR повинен бути ≥ 1 г/Од")
+    @field:DecimalMax("50.0", message = "ICR повинен бути ≤ 50 г/Од")
     val insulinToCarbRatio: Double?,
+
+    @field:DecimalMin("2.0", message = "Мін. цільова глюкоза ≥ 2.0 ммоль/л")
+    @field:DecimalMax("7.0", message = "Мін. цільова глюкоза ≤ 7.0 ммоль/л")
     val targetGlucoseMin: Double?,
+
+    @field:DecimalMin("4.0", message = "Макс. цільова глюкоза ≥ 4.0 ммоль/л")
+    @field:DecimalMax("15.0", message = "Макс. цільова глюкоза ≤ 15.0 ммоль/л")
     val targetGlucoseMax: Double?,
+
+    @field:DecimalMin("1.0", message = "DIA повинен бути ≥ 1 год")
+    @field:DecimalMax("12.0", message = "DIA повинен бути ≤ 12 год")
     val durationOfInsulinAction: Double?,
+
+    @field:DecimalMin("0.5", message = "Коефіцієнт резистентності ≥ 0.5")
+    @field:DecimalMax("5.0", message = "Коефіцієнт резистентності ≤ 5.0")
+    val insulinResistanceFactor: Double?,
+
+    @field:Min(60, message = "Час всмоктування вуглеводів ≥ 60 хв")
+    @field:Max(240, message = "Час всмоктування вуглеводів ≤ 240 хв")
+    val carbAbsorptionMinutes: Int?,
+
+    val activityCoefficients: ActivityCoefficientsDto?,
+
     val basalInsulinType: String?,
     val bolusInsulinType: String?,
 )
+
+// ── Activity coefficients (section 2.1.2) ──
+data class ActivityCoefficientsDto(
+    val lightAerobic: Double    = 0.90,
+    val lightAnaerobic: Double  = 0.95,
+    val lightMixed: Double      = 0.93,
+    val moderateAerobic: Double = 0.75,
+    val moderateAnaerobic: Double = 0.87,
+    val moderateMixed: Double   = 0.82,
+    val highAerobic: Double     = 0.60,
+    val highAnaerobic: Double   = 0.77,
+    val highMixed: Double       = 0.68,
+    val maximalAerobic: Double  = 0.40,
+    val maximalAnaerobic: Double = 0.67,
+    val maximalMixed: Double    = 0.52,
+) {
+    fun validate(): List<String> {
+        val errors = mutableListOf<String>()
+        val fields = mapOf(
+            "lightAerobic" to lightAerobic, "lightAnaerobic" to lightAnaerobic,
+            "lightMixed" to lightMixed, "moderateAerobic" to moderateAerobic,
+            "moderateAnaerobic" to moderateAnaerobic, "moderateMixed" to moderateMixed,
+            "highAerobic" to highAerobic, "highAnaerobic" to highAnaerobic,
+            "highMixed" to highMixed, "maximalAerobic" to maximalAerobic,
+            "maximalAnaerobic" to maximalAnaerobic, "maximalMixed" to maximalMixed,
+        )
+        fields.forEach { (name, v) ->
+            if (v < 0.10 || v > 1.00) errors += "$name must be between 0.10 and 1.00"
+        }
+        return errors
+    }
+
+    companion object {
+        val DEFAULT = ActivityCoefficientsDto()
+    }
+}
 
 // ── Meal records ──
 data class MealRecordRequest(
@@ -183,6 +260,8 @@ data class BolusCalculationResponse(
     val timeFactor: Double? = null,
     val durationFactor: Double? = null,
     val activityWarning: String? = null,
+    /** true when ISF or ICR was estimated from body weight (1700/500 rules) */
+    val usingWeightEstimation: Boolean = false,
 )
 
 // ── Glucose forecasting (section 2.2) ──

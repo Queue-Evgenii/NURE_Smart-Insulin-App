@@ -15,4 +15,4 @@ ENV LD_LIBRARY_PATH=/usr/local/lib/nativelibs
 
 EXPOSE 8080
 
-ENTRYPOINT ["java", "-Djna.library.path=/usr/local/lib/nativelibs", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-Dfile.encoding=UTF-8", "-Dstdout.encoding=UTF-8", "-Dstderr.encoding=UTF-8", "-Djna.library.path=/usr/local/lib/nativelibs", "-jar", "app.jar"]

@@ -45,22 +45,12 @@
                 </ion-item>
 
                 <!-- AI carbs estimation -->
-                <ion-item lines="none">
-                  <ion-textarea
-                    v-model="mealDescription"
-                    :label="t('bolus.form.mealDescription')"
-                    label-placement="floating"
-                    :placeholder="t('bolus.form.mealDescriptionPlaceholder')"
-                    :rows="2"
-                    auto-grow
-                  />
-                </ion-item>
                 <ion-item lines="none" class="ai-estimate-row">
                   <ion-button
                     slot="end"
                     size="small"
                     fill="outline"
-                    :disabled="estimatingCarbs || !mealDescription.trim()"
+                    :disabled="estimatingCarbs || !mealName.trim()"
                     @click="estimateCarbs"
                   >
                     <ion-spinner v-if="estimatingCarbs" name="crescent" slot="start" />
@@ -308,7 +298,7 @@ import { useI18n } from 'vue-i18n';
 import {
   IonPage, IonHeader, IonToolbar, IonButtons, IonMenuButton, IonTitle, IonContent,
   IonCard, IonCardHeader, IonCardTitle, IonCardSubtitle, IonCardContent,
-  IonList, IonItem, IonLabel, IonBadge, IonInput, IonTextarea, IonButton,
+  IonList, IonItem, IonLabel, IonBadge, IonInput, IonButton,
   IonSpinner, IonNote, IonIcon, IonSelect, IonSelectOption,
   toastController,
 } from '@ionic/vue';
@@ -344,7 +334,6 @@ interface InsulinDose {
 
 const currentGlucose = ref<number | null>(null);
 const mealName = ref('');
-const mealDescription = ref('');
 const carbsG = ref<number | null>(null);
 const glycemicIndex = ref<number | null>(null);
 const calculating = ref(false);
@@ -435,13 +424,13 @@ async function fetchRecommendation() {
 }
 
 async function estimateCarbs() {
-  if (!mealDescription.value.trim()) return;
+  if (!mealName.value.trim()) return;
   estimatingCarbs.value = true;
   carbsBreakdown.value = '';
   try {
     const res = await apiFetch('/api/bolus/estimate-carbs', {
       method: 'POST',
-      body: JSON.stringify({ mealDescription: mealDescription.value }),
+      body: JSON.stringify({ mealDescription: mealName.value }),
     });
     if (res.ok) {
       const data = await res.json();
@@ -509,6 +498,15 @@ async function logDose() {
       mealRecordId = meal.id;
     }
 
+    await apiFetch('/api/glucose', {
+      method: 'POST',
+      body: JSON.stringify({
+        glucoseValue: currentGlucose.value,
+        measurementType: 'MANUAL',
+        measuredAt: now,
+      }),
+    });
+
     const doseRes = await apiFetch('/api/doses', {
       method: 'POST',
       body: JSON.stringify({
@@ -527,7 +525,6 @@ async function logDose() {
       adjustedDose.value = null;
       currentGlucose.value = null;
       mealName.value = '';
-      mealDescription.value = '';
       carbsBreakdown.value = '';
       carbsG.value = null;
       glycemicIndex.value = null;

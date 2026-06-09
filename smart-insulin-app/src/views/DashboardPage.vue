@@ -53,7 +53,7 @@
         <div class="dashboard-row">
           <!-- Block 2: HbA1c Assessment -->
           <div class="dashboard-block">
-            <ion-card>
+            <ion-card style="height: 100%;">
               <ion-card-header>
                 <ion-card-title class="block-title">{{ t('dashboard.hba1c.title') }}</ion-card-title>
                 <ion-card-subtitle>{{ t('dashboard.hba1c.subtitle') }}</ion-card-subtitle>
@@ -416,7 +416,7 @@ async function addReading() {
     if (res.ok) {
       newGlucose.value = null;
       newNotes.value = '';
-      await Promise.all([loadReadings(0), loadHbA1c()]);
+      await Promise.all([loadReadings(0), loadHbA1c(), loadForecast()]);
       const toast = await toastController.create({ message: t('dashboard.addReading.success'), duration: 1500 });
       await toast.present();
     } else {
