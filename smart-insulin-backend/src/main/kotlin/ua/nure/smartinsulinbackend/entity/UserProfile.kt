@@ -1,6 +1,7 @@
 package ua.nure.smartinsulinbackend.entity
 
 import jakarta.persistence.*
+import org.hibernate.annotations.ColumnTransformer
 import java.time.Instant
 
 @Entity
@@ -54,6 +55,7 @@ class UserProfile(
      * NULL — використовуються клінічні значення за замовчуванням.
      */
     @Column(columnDefinition = "jsonb")
+    @ColumnTransformer(write = "?::jsonb")
     val activityCoefficients: String? = null,
 
     /** Тип базального інсуліну (напр. Lantus, Tresiba) */

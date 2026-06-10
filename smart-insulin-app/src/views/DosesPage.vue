@@ -44,15 +44,6 @@
                 </ion-item>
                 <ion-item>
                   <ion-input
-                    v-model="newInsulinType"
-                    type="text"
-                    :label="t('doses.add.insulinType')"
-                    label-placement="floating"
-                    placeholder="NovoRapid"
-                  />
-                </ion-item>
-                <ion-item>
-                  <ion-input
                     v-model.number="newGlucoseBefore"
                     type="number"
                     :label="t('doses.add.glucoseBefore')"

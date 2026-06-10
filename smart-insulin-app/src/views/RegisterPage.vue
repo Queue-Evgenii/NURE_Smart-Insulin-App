@@ -60,19 +60,6 @@
                 required
               />
             </ion-item>
-
-            <ion-item>
-              <ion-select
-                v-model="diabetesType"
-                :label="t('auth.register.diabetesType')"
-                label-placement="floating"
-                :placeholder="t('auth.register.diabetesTypePlaceholder')"
-                interface="action-sheet"
-              >
-                <ion-select-option :value="1">{{ t('auth.type1') }}</ion-select-option>
-                <ion-select-option :value="2">{{ t('auth.type2') }}</ion-select-option>
-              </ion-select>
-            </ion-item>
           </ion-list>
 
           <ion-text v-if="errorMsg" color="danger" class="error-text">
@@ -102,7 +89,7 @@ import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import {
   IonPage, IonContent, IonList, IonItem, IonInput,
-  IonButton, IonText, IonIcon, IonSpinner, IonSelect, IonSelectOption,
+  IonButton, IonText, IonIcon, IonSpinner,
 } from '@ionic/vue';
 import { medkit, eye, eyeOff } from 'ionicons/icons';
 import { register } from '@/services/auth';
