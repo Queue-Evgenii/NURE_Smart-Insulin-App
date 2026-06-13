@@ -185,13 +185,26 @@ async function addDose() {
   if (!newUnits.value || newUnits.value <= 0) return;
   adding.value = true;
   try {
+    const now = new Date().toISOString();
+
+    if (newGlucoseBefore.value) {
+      await apiFetch('/api/glucose', {
+        method: 'POST',
+        body: JSON.stringify({
+          glucoseValue: newGlucoseBefore.value,
+          measurementType: 'MANUAL',
+          measuredAt: now,
+        }),
+      });
+    }
+
     const res = await apiFetch('/api/doses', {
       method: 'POST',
       body: JSON.stringify({
         doseUnits: newUnits.value,
         doseType: newDoseType.value,
         insulinType: newInsulinType.value || null,
-        injectedAt: new Date().toISOString(),
+        injectedAt: now,
         glucoseBefore: newGlucoseBefore.value || null,
         notes: newNotes.value || null,
       }),

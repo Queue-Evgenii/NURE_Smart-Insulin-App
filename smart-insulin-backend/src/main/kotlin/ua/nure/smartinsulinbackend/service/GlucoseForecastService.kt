@@ -1,5 +1,6 @@
 package ua.nure.smartinsulinbackend.service
 
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import ua.nure.smartinsulinbackend.dto.ForecastPoint
@@ -32,11 +33,17 @@ class GlucoseForecastService(
     private val mealRecordRepository: MealRecordRepository,
     private val hbA1cLibrary: HbA1cLibrary,
 ) {
+    private val log = LoggerFactory.getLogger(GlucoseForecastService::class.java)
     private val trendWindowMinutes = 45L
     private val stepMinutes = 30
     private val hypoThreshold = 3.9
     private val hyperThreshold = 10.0
     private val minReadingsForConfidence = 3
+
+    // Population-average fallbacks for a 70 kg T1DM adult (used when no profile is set)
+    private val defaultIsfMmol = 2.7   // mmol/L per unit  (94 / 35 U TDD)
+    private val defaultIcr = 14.3      // g carbs per unit  (500 / 35 U TDD)
+    private val defaultDiaHours = 4.0  // hours
 
     fun forecast(user: User, request: ForecastRequest): ForecastResponse {
         val recent = glucoseReadingRepository
@@ -69,18 +76,18 @@ class GlucoseForecastService(
             recent.map { it.glucoseValue }.toDoubleArray(), recent.size.toLong(),
         )
 
-        // Clinical parameters (trend-only forecast when they are absent).
+        // Clinical parameters; fall back to weight-based estimates, then population averages.
         val profile = userProfileRepository.findByUserId(user.id).orElse(null)
         val tddEstimate = profile?.weightKg?.let { it * 0.5 }
-        val isf = profile?.insulinSensitivityFactor
+        val isf = profile?.insulinSensitivityFactor?.takeIf { it > 0 }
             ?: tddEstimate?.let { 94.0 / it }
-            ?: 0.0
-        val icr = profile?.insulinToCarbRatio
+            ?: defaultIsfMmol
+        val icr = profile?.insulinToCarbRatio?.takeIf { it > 0 }
             ?: tddEstimate?.let { 500.0 / it }
-            ?: 0.0
-        val diaMin = (profile?.durationOfInsulinAction ?: 0.0) * 60.0
+            ?: defaultIcr
+        val diaMin = (profile?.durationOfInsulinAction?.takeIf { it > 0 } ?: defaultDiaHours) * 60.0
         val carbAbsorptionMinutes = (profile?.carbAbsorptionMinutes ?: 120).toDouble()
-        val iob = if (diaMin > 0.0) currentIob(user.id, diaMin) else 0.0
+        val iob = currentIob(user.id, diaMin)
         // If the client did not supply carbsOnBoard, derive it from meals eaten within the
         // absorption window — linear decay: COB = carbs × (1 − t / carbAbsorptionMinutes).
         val carbsOnBoard = if (request.carbsOnBoard > 0.0) {
@@ -140,12 +147,17 @@ class GlucoseForecastService(
     private fun currentIob(userId: Long, diaMin: Double): Double {
         val now = Instant.now()
         val windowStart = now.minusSeconds((diaMin * 60).roundToLong())
-        return insulinDoseRepository
+        val doses = insulinDoseRepository
             .findByUserIdAndInjectedAtBetweenOrderByInjectedAtAsc(userId, windowStart, now)
-            .sumOf { dose ->
-                val timeSinceMins = (now.epochSecond - dose.injectedAt.epochSecond) / 60.0
-                hbA1cLibrary.calculate_iob(dose.doseUnits, timeSinceMins, diaMin)
-            }
+        log.debug("IOB debug: userId={} diaMin={} window=[{} → {}] dosesFound={}",
+            userId, diaMin, windowStart, now, doses.size)
+        return doses.sumOf { dose ->
+            val timeSinceMins = (now.epochSecond - dose.injectedAt.epochSecond) / 60.0
+            val iob = hbA1cLibrary.calculate_iob(dose.doseUnits, timeSinceMins, diaMin)
+            log.debug("  dose id={} units={} injectedAt={} timeSinceMins={} iob={}",
+                dose.id, dose.doseUnits, dose.injectedAt, timeSinceMins, iob)
+            iob
+        }
     }
 
     private fun round1(v: Double) = Math.round(v * 10.0) / 10.0
