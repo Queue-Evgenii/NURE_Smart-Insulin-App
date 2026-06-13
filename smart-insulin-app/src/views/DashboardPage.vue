@@ -262,17 +262,42 @@ const trendText = computed(() => {
 const forecastChartData = computed(() => {
   if (!forecast.value) return { labels: [], datasets: [] };
 
-  const labels = forecast.value.points.map(p => `${p.minutesAhead}'`);
-  const predicted = forecast.value.points.map(p => p.predicted);
-  const lower = forecast.value.points.map(p => p.lower);
-  const upper = forecast.value.points.map(p => p.upper);
+  const now = Date.now();
+  const histReadings = readings.value.slice(0, 10).reverse();
+
+  const histLabels = histReadings.map(r => {
+    const minAgo = Math.round((now - new Date(r.measuredAt).getTime()) / 60000);
+    return `-${minAgo}'`;
+  });
+  const forecastLabels = forecast.value.points.map(p => `+${p.minutesAhead}'`);
+  const labels = [...histLabels, "0'", ...forecastLabels];
+
+  const nullHist = histReadings.map(() => null);
+  const nullForecast = forecast.value.points.map(() => null);
+
+  const histData = [...histReadings.map(r => r.glucoseValue), forecast.value.currentGlucose, ...nullForecast];
+  const forecastData = [...nullHist, forecast.value.currentGlucose, ...forecast.value.points.map(p => p.predicted)];
+  const upperData = [...nullHist, null, ...forecast.value.points.map(p => p.upper)];
+  const lowerData = [...nullHist, null, ...forecast.value.points.map(p => p.lower)];
 
   return {
     labels,
     datasets: [
       {
+        label: t('forecast.history'),
+        data: histData,
+        borderColor: '#2dd36f',
+        backgroundColor: 'transparent',
+        borderWidth: 2,
+        fill: false,
+        tension: 0.4,
+        pointRadius: 3,
+        pointBackgroundColor: '#2dd36f',
+        spanGaps: false,
+      },
+      {
         label: t('forecast.predicted'),
-        data: predicted,
+        data: forecastData,
         borderColor: '#3880ff',
         backgroundColor: 'rgba(56, 128, 255, 0.1)',
         borderWidth: 2,
@@ -280,23 +305,26 @@ const forecastChartData = computed(() => {
         tension: 0.4,
         pointRadius: 4,
         pointBackgroundColor: '#3880ff',
+        spanGaps: false,
       },
       {
         label: t('forecast.band'),
-        data: upper,
+        data: upperData,
         borderColor: 'transparent',
         backgroundColor: 'rgba(56, 128, 255, 0.05)',
         fill: '-1',
         borderWidth: 0,
         pointRadius: 0,
+        spanGaps: false,
       },
       {
         label: t('forecast.lowerBand'),
-        data: lower,
+        data: lowerData,
         borderColor: 'transparent',
         backgroundColor: 'transparent',
         borderWidth: 0,
         pointRadius: 0,
+        spanGaps: false,
       },
     ],
   };
@@ -313,6 +341,9 @@ const forecastChartOptions = computed(() => ({
       callbacks: {
         label: (context: any) => {
           if (context.datasetIndex === 0) {
+            return `${t('forecast.history')}: ${context.parsed.y.toFixed(1)}`;
+          }
+          if (context.datasetIndex === 1) {
             return `${t('forecast.predicted')}: ${context.parsed.y.toFixed(1)}`;
           }
           return '';
@@ -322,8 +353,8 @@ const forecastChartOptions = computed(() => ({
   },
   scales: {
     y: {
-      min: 2,
-      max: 12,
+      suggestedMin: 3,
+      suggestedMax: 12,
       grid: {
         color: 'rgba(255, 255, 255, 0.1)',
       },
@@ -337,6 +368,7 @@ const forecastChartOptions = computed(() => ({
       },
       ticks: {
         color: 'rgba(255, 255, 255, 0.7)',
+        maxTicksLimit: 10,
       },
     },
   },
@@ -575,7 +607,7 @@ ion-item {
 }
 
 .forecast-chart-container {
-  height: 280px;
+  height: 320px;
   position: relative;
   width: 100%;
 }

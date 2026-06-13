@@ -272,6 +272,7 @@ export default {
     readingsUsed: 'Розраховано за {n} вимірюваннями',
     lowConfidenceWarning: 'Малко вимірювань — низька точність прогнозу',
     predicted: 'Прогноз',
+    history: 'Історія',
     band: 'Діапазон',
     lowerBand: 'Нижня межа',
     table: {

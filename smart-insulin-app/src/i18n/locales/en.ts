@@ -235,4 +235,12 @@ export default {
     errorSave: 'Failed to save profile',
     errorNetwork: 'Network error. Please try again.',
   },
+  forecast: {
+    title: 'Glucose Forecast',
+    predicted: 'Forecast',
+    band: 'Range',
+    lowerBand: 'Lower bound',
+    history: 'History',
+    readingsUsed: 'Based on {n} readings',
+  },
 }
