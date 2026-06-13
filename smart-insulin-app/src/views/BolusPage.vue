@@ -165,7 +165,7 @@
                 </div>
                 <div v-if="result.activityFactor" class="activity-factors">
                   <small>{{ t('bolus.result.baselineDose', { dose: result.totalDose.toFixed(1) }) }}</small>
-                  <small>{{ t('bolus.result.activityFactor', { f: (result.activityFactor * 100).toFixed(0), t: (result.timeFactor * 100).toFixed(0), d: (result.durationFactor * 100).toFixed(0) }) }}</small>
+                  <small>{{ t('bolus.result.activityFactor', { f: (result.activityFactor * 100).toFixed(0), t: (result.timeFactor! * 100).toFixed(0), d: (result.durationFactor! * 100).toFixed(0) }) }}</small>
                 </div>
                 <div class="dose-breakdown">
                   <div class="breakdown-row">
