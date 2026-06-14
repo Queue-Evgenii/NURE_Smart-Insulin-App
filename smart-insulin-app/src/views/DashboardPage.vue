@@ -101,6 +101,7 @@
                       :label="t('dashboard.addReading.measurementType')"
                       label-placement="floating"
                       interface="action-sheet"
+                      :cancel-text="t('common.back')"
                     >
                       <ion-select-option value="MANUAL">{{ t('dashboard.addReading.manual') }}</ion-select-option>
                       <ion-select-option value="CGM">{{ t('dashboard.addReading.cgm') }}</ion-select-option>

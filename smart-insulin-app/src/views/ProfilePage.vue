@@ -33,6 +33,7 @@
                       :label="t('profile.settings.language')"
                       label-placement="floating"
                       interface="action-sheet"
+                      :cancel-text="t('common.back')"
                       @ion-change="changeLocale"
                     >
                       <ion-select-option value="uk">Українська</ion-select-option>
@@ -45,6 +46,7 @@
                       :label="t('profile.settings.theme')"
                       label-placement="floating"
                       interface="action-sheet"
+                      :cancel-text="t('common.back')"
                       @ion-change="changeTheme"
                     >
                       <ion-select-option value="system">{{ t('profile.settings.themeSystem') }}</ion-select-option>
@@ -81,6 +83,7 @@
                       :label="t('profile.personal.diabetesType')"
                       label-placement="floating"
                       interface="action-sheet"
+                      :cancel-text="t('common.back')"
                       :placeholder="t('profile.personal.select')"
                     >
                       <ion-select-option :value="1">{{ t('profile.personal.type1') }}</ion-select-option>
@@ -153,6 +156,7 @@
                       :label="t('profile.insulin.basalType')"
                       label-placement="floating"
                       interface="action-sheet"
+                      :cancel-text="t('common.back')"
                       :placeholder="t('profile.insulin.selectPlaceholder')"
                     >
                       <ion-select-option v-for="ins in BASAL_INSULINS" :key="ins.name" :value="ins.name">
@@ -166,6 +170,7 @@
                       :label="t('profile.insulin.bolusType')"
                       label-placement="floating"
                       interface="action-sheet"
+                      :cancel-text="t('common.back')"
                       :placeholder="t('profile.insulin.selectPlaceholder')"
                       @ion-change="onBolusInsulinChange"
                     >

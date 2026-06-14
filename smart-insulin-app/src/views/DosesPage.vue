@@ -36,10 +36,10 @@
                     :label="t('doses.add.doseType')"
                     label-placement="floating"
                     interface="action-sheet"
+                    :cancel-text="t('common.back')"
                   >
                     <ion-select-option value="BOLUS">{{ t('doses.add.bolus') }}</ion-select-option>
                     <ion-select-option value="BASAL">{{ t('doses.add.basal') }}</ion-select-option>
-                    <ion-select-option value="CORRECTION">{{ t('doses.add.correction') }}</ion-select-option>
                   </ion-select>
                 </ion-item>
                 <ion-item>
