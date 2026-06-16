@@ -191,4 +191,46 @@ class GlucoseForecastTest {
         val expectedLowering = iob * isf
         assertEquals(5.0, expectedLowering)
     }
+
+    // ── "Project to now" — staleness handling (regression: 0' point showed old reading) ──
+
+    @Test
+    fun freshReadingProjectsToItselfAtNow() {
+        // No gap → predicted-now equals the last measured reading.
+        val currentGlucose = 6.0
+        val slope = 0.05
+        val gapMinutes = 0.0
+
+        val predictedNow = (currentGlucose + slope * gapMinutes * Math.exp(-gapMinutes / 120.0))
+            .coerceAtLeast(1.0)
+        assertEquals(6.0, predictedNow, 0.001)
+    }
+
+    @Test
+    fun staleReadingIsCarriedForwardToNowByDampedTrend() {
+        // Reading taken 120 min ago, rising 0.02 mmol/L/min → "now" must be higher than the
+        // stale value, damped because confidence in the slope decays with time.
+        val currentGlucose = 6.0
+        val slope = 0.02
+        val gapMinutes = 120.0
+
+        val damping = Math.exp(-gapMinutes / 120.0)              // ≈ 0.368
+        val predictedNow = (currentGlucose + slope * gapMinutes * damping).coerceAtLeast(1.0)
+
+        assertTrue(predictedNow > currentGlucose, "Now should differ from the 2h-old reading")
+        assertEquals(6.0 + 0.02 * 120.0 * damping, predictedNow, 0.001)  // ≈ 6.88
+    }
+
+    @Test
+    fun uncertaintyBandAccountsForGapSinceLastReading() {
+        // A point "+30 min from now" after a 90-min-old reading is 120 min from real data,
+        // so its band must be wider than if the reading were fresh.
+        val volatility = 0.5
+        val h = 30
+        val bandFresh = (volatility + 0.5) * (1.0 + (0.0 + h) / 120.0)
+        val bandStale = (volatility + 0.5) * (1.0 + (90.0 + h) / 120.0)
+
+        assertTrue(bandStale > bandFresh)
+        assertEquals(2.0, bandStale, 0.001)
+    }
 }

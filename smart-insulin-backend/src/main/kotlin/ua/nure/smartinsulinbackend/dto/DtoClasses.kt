@@ -280,7 +280,12 @@ data class ForecastPoint(
 )
 
 data class ForecastResponse(
+    /** Last actually-measured glucose (mmol/L). May be several minutes/hours old. */
     val currentGlucose: Double,
+    /** Estimated glucose right now — the last reading projected forward over the gap by the trend. */
+    val predictedNow: Double,
+    /** Minutes elapsed since the last measured reading (the staleness of currentGlucose). */
+    val minutesSinceReading: Int,
     /** mmol/L per minute; negative = falling */
     val trendPerMinute: Double,
     val points: List<ForecastPoint>,

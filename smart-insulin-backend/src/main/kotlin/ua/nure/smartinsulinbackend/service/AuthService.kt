@@ -66,7 +66,19 @@ class AuthService(
     }
 
     private fun issueTokens(user: User): TokenResponse {
-        refreshTokenRepository.deleteByUser(user)
+        // Keep at most MAX_CONCURRENT_SESSIONS refresh tokens per user. Prune any expired
+        // ones, then — if still at the limit — evict the oldest to make room for the new one.
+        val now = Instant.now()
+        val existing = refreshTokenRepository.findByUserOrderByCreatedAtAsc(user)
+        val (expired, active) = existing.partition { it.expiryDate.isBefore(now) }
+        val toDelete = expired.toMutableList()
+        val overflow = active.size - (MAX_CONCURRENT_SESSIONS - 1)
+        if (overflow > 0) toDelete += active.take(overflow)
+        if (toDelete.isNotEmpty()) {
+            refreshTokenRepository.deleteAll(toDelete)
+            refreshTokenRepository.flush()
+        }
+
         val accessToken = jwtService.generateAccessToken(user)
         val rawRefreshToken = jwtService.generateRefreshToken(user)
         refreshTokenRepository.save(
@@ -83,5 +95,10 @@ class AuthService(
         val digest = MessageDigest.getInstance("SHA-256")
         return digest.digest(token.toByteArray(Charsets.UTF_8))
             .joinToString("") { "%02x".format(it) }
+    }
+
+    private companion object {
+        /** Max simultaneous logged-in sessions (devices) per account. */
+        const val MAX_CONCURRENT_SESSIONS = 3
     }
 }

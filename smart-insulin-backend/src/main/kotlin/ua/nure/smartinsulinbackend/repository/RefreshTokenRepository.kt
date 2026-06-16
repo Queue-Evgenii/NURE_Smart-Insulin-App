@@ -10,6 +10,9 @@ import java.util.Optional
 interface RefreshTokenRepository : JpaRepository<RefreshToken, Long> {
     fun findByToken(token: String): Optional<RefreshToken>
 
+    /** Active sessions for a user, oldest first — the head is the eviction candidate. */
+    fun findByUserOrderByCreatedAtAsc(user: User): List<RefreshToken>
+
     @Modifying
     @Query("DELETE FROM RefreshToken r WHERE r.user = :user")
     fun deleteByUser(user: User)

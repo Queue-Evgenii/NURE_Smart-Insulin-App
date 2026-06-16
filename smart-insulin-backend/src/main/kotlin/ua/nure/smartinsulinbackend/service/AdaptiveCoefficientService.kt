@@ -47,6 +47,21 @@ class AdaptiveCoefficientService(
     private val postprandialFromHours = 2.5
     private val postprandialToHours = 3.5
 
+    // Physiological bounds. They must mirror the manual-entry validation in
+    // UserProfileUpdateRequest (ISF 0.5–20 mmol/L/U, ICR 1–50 g/U). The adaptive
+    // path persists the profile directly, bypassing the DTO validation, so it has
+    // to enforce these limits itself — otherwise an absurd value (e.g. ICR 55.56)
+    // can slip into the profile and silently under-dose the patient.
+    private val icrMin = 1.0
+    private val icrMax = 50.0
+    private val isfMin = 0.5
+    private val isfMax = 20.0
+
+    // Below this average total daily dose the 100/500 rules produce unreliable
+    // coefficients (sparse history or a few tiny test doses), so we skip seeding
+    // and leave the value unset rather than emit garbage.
+    private val minTddForSeed = 15.0
+
     data class CoefficientUpdateResult(
         val insulinToCarbRatio: Double?,
         val insulinSensitivityFactor: Double?,
@@ -74,13 +89,17 @@ class AdaptiveCoefficientService(
             observations = icrObs,
             previous = profile.insulinToCarbRatio,
             wasAdaptive = profile.usingAdaptiveCoefficients,
-            seed = tdd?.let { 500.0 / it },
+            seed = tdd?.takeIf { it >= minTddForSeed }?.let { 500.0 / it },
+            min = icrMin,
+            max = icrMax,
         )
         val newIsf = resolveCoefficient(
             observations = isfObs,
             previous = profile.insulinSensitivityFactor,
             wasAdaptive = profile.usingAdaptiveCoefficients,
-            seed = tdd?.let { 100.0 / it },
+            seed = tdd?.takeIf { it >= minTddForSeed }?.let { 100.0 / it },
+            min = isfMin,
+            max = isfMax,
         )
 
         val nowAdaptive = profile.usingAdaptiveCoefficients ||
@@ -136,7 +155,7 @@ class AdaptiveCoefficientService(
             .filter { (it.mealRecord?.carbohydratesG ?: 0.0) >= correctionCarbsThreshold }
             .filter { glucoseInTarget(it.glucoseBefore, profile) }
             .map { it.mealRecord!!.carbohydratesG / it.doseUnits }
-            .filter { it.isFinite() && it > 0.0 }
+            .filter { it.isFinite() && it in icrMin..icrMax }   // drop physiologically impossible outliers
             .toList()
 
     /** Correction injections → (glucose_before − glucose_after_3h) / dose. */
@@ -153,7 +172,7 @@ class AdaptiveCoefficientService(
                 val drop = dose.glucoseBefore!! - after.glucoseValue
                 if (drop <= 0.0) null else drop / dose.doseUnits
             }
-            .filter { it.isFinite() && it > 0.0 }
+            .filter { it.isFinite() && it in isfMin..isfMax }   // drop physiologically impossible outliers
             .toList()
 
     private fun isCorrectionDose(dose: InsulinDose): Boolean =
@@ -180,15 +199,21 @@ class AdaptiveCoefficientService(
         previous: Double?,
         wasAdaptive: Boolean,
         seed: Double?,
-    ): Double? = when {
-        observations.size >= minObservations -> {
-            val med = median(observations)
-            val value = if (wasAdaptive && previous != null) smoothNew * med + smoothPrev * previous else med
-            round2(value)
+        min: Double,
+        max: Double,
+    ): Double? {
+        val value = when {
+            observations.size >= minObservations -> {
+                val med = median(observations)
+                if (wasAdaptive && previous != null) smoothNew * med + smoothPrev * previous else med
+            }
+            previous != null -> previous
+            seed != null && seed.isFinite() && seed > 0.0 -> seed
+            else -> null
         }
-        previous != null -> previous
-        seed != null && seed.isFinite() && seed > 0.0 -> round2(seed)
-        else -> null
+        // Final safety net — clamps the median/seed and heals any legacy out-of-range
+        // value already stored in the profile.
+        return value?.let { round2(it.coerceIn(min, max)) }
     }
 
     /** Average total daily dose over the window, used by the 100/500 rules. */
@@ -226,6 +251,11 @@ class AdaptiveCoefficientService(
         targetGlucoseMin = targetGlucoseMin,
         targetGlucoseMax = targetGlucoseMax,
         durationOfInsulinAction = durationOfInsulinAction,
+        // Preserve fields the recalculation does not touch — omitting them previously
+        // reset them to their defaults (1.0 / 120 / null) on every recompute.
+        insulinResistanceFactor = insulinResistanceFactor,
+        carbAbsorptionMinutes = carbAbsorptionMinutes,
+        activityCoefficients = activityCoefficients,
         basalInsulinType = basalInsulinType,
         bolusInsulinType = bolusInsulinType,
         lastCoefficientUpdate = lastCoefficientUpdate,

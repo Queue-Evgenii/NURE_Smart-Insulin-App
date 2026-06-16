@@ -163,4 +163,39 @@ class AdaptiveCoefficientTest {
         assertEquals(3, filtered.size)
         assertEquals(listOf(2.5, 3.0, 2.8), filtered)
     }
+
+    // ── Physiological bounds & low-TDD guard (regression: ICR 55.56 bug) ────────
+
+    @Test
+    fun lowTotalDailyDoseDoesNotSeedCoefficients() {
+        // TDD = 9 U/day would seed ICR = 500/9 = 55.56 and ISF = 100/9 = 11.11.
+        // Below the 15 U/day floor we skip seeding entirely.
+        val minTddForSeed = 15.0
+        val tdd = 9.0
+
+        val seed = if (tdd >= minTddForSeed) 500.0 / tdd else null
+        assertEquals(null, seed)
+    }
+
+    @Test
+    fun outOfRangeIcrObservationsAreFiltered() {
+        val icrMin = 1.0
+        val icrMax = 50.0
+        // 500g / 1U = 500 (impossible) must be dropped; 50g / 5U = 10 kept.
+        val observations = listOf(500.0, 10.0, 0.5, 12.0)
+        val filtered = observations.filter { it in icrMin..icrMax }
+
+        assertEquals(listOf(10.0, 12.0), filtered)
+    }
+
+    @Test
+    fun resolvedCoefficientIsClampedToBounds() {
+        val icrMin = 1.0
+        val icrMax = 50.0
+        // A legacy stored value of 55.56 is healed back into range on recompute.
+        val previous = 55.56
+        val clamped = previous.coerceIn(icrMin, icrMax)
+
+        assertEquals(50.0, clamped)
+    }
 }

@@ -34,18 +34,20 @@ class BolusCalculationService(
         val missingParams = mutableListOf<String>()
         var usingWeightEstimation = false
 
-        val insulinToCarbRatio = profile?.insulinToCarbRatio
+        val insulinToCarbRatio = (profile?.insulinToCarbRatio
             ?: tddEstimate?.let { tdd ->
                 usingWeightEstimation = true
                 500.0 / tdd           // 500 rule (Walsh & Roberts)
-            }
+            })
+            ?.coerceIn(ICR_MIN, ICR_MAX)   // guard against out-of-range stored/estimated values
             ?: run { missingParams += "insulinToCarbRatio"; null }
 
-        val insulinSensitivityFactor = profile?.insulinSensitivityFactor
+        val insulinSensitivityFactor = (profile?.insulinSensitivityFactor
             ?: tddEstimate?.let { tdd ->
                 usingWeightEstimation = true
                 94.0 / tdd            // 1700 rule converted to mmol/L (÷18)
-            }
+            })
+            ?.coerceIn(ISF_MIN, ISF_MAX)   // guard against out-of-range stored/estimated values
             ?: run { missingParams += "insulinSensitivityFactor"; null }
 
         val targetGlucoseMin = profile?.targetGlucoseMin
@@ -104,4 +106,12 @@ class BolusCalculationService(
     }
 
     private fun round1(v: Double) = Math.round(v * 10.0) / 10.0
+
+    private companion object {
+        // Physiological bounds, mirroring UserProfileUpdateRequest validation.
+        const val ICR_MIN = 1.0
+        const val ICR_MAX = 50.0
+        const val ISF_MIN = 0.5
+        const val ISF_MAX = 20.0
+    }
 }

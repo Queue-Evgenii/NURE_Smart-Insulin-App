@@ -14,7 +14,13 @@ class RefreshToken(
     @Column(nullable = false)
     val expiryDate: Instant,
 
-    @OneToOne
+    // Multiple concurrent sessions per user (up to a limit enforced in AuthService),
+    // so this is many-to-one, not one-to-one.
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", referencedColumnName = "id")
-    val user: User
+    val user: User,
+
+    /** When this session was opened — used to evict the oldest session past the limit. */
+    @Column(nullable = false)
+    val createdAt: Instant = Instant.now(),
 )

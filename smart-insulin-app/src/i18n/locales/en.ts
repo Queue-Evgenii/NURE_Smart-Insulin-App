@@ -149,7 +149,7 @@ export default {
       doseType: 'Injection type',
       bolus: 'Bolus',
       basal: 'Basal',
-      correction: 'Bolus',
+      correction: 'Сorrection',
       insulinType: 'Insulin type (optional)',
       glucoseBefore: 'Glucose before (mmol/L, optional)',
       button: 'Log Injection',

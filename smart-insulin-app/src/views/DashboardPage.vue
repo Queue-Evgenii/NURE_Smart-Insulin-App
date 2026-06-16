@@ -212,6 +212,8 @@ interface ForecastPoint {
 
 interface Forecast {
   currentGlucose: number;
+  predictedNow: number;
+  minutesSinceReading: number;
   trendPerMinute: number;
   points: ForecastPoint[];
   riskFlags: string[];
@@ -276,8 +278,16 @@ const forecastChartData = computed(() => {
   const nullHist = histReadings.map(() => null);
   const nullForecast = forecast.value.points.map(() => null);
 
-  const histData = [...histReadings.map(r => r.glucoseValue), forecast.value.currentGlucose, ...nullForecast];
-  const forecastData = [...nullHist, forecast.value.currentGlucose, ...forecast.value.points.map(p => p.predicted)];
+  // History line ends at the last *measured* reading (at its real time offset). The "0'"
+  // node shows the predicted glucose for now, not the (possibly stale) last reading.
+  const lastHistIdx = histReadings.length - 1;
+  const histData = [...histReadings.map(r => r.glucoseValue), null, ...nullForecast];
+  // Forecast line bridges from the last real reading → predicted-now → future points.
+  const forecastData = [
+    ...histReadings.map((r, i) => (i === lastHistIdx ? r.glucoseValue : null)),
+    forecast.value.predictedNow,
+    ...forecast.value.points.map(p => p.predicted),
+  ];
   const upperData = [...nullHist, null, ...forecast.value.points.map(p => p.upper)];
   const lowerData = [...nullHist, null, ...forecast.value.points.map(p => p.lower)];
 

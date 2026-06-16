@@ -52,14 +52,20 @@ class GlucoseForecastService(
 
         if (recent.isEmpty()) {
             return ForecastResponse(
-                currentGlucose = 0.0, trendPerMinute = 0.0,
+                currentGlucose = 0.0, predictedNow = 0.0, minutesSinceReading = 0,
+                trendPerMinute = 0.0,
                 points = emptyList(), riskFlags = listOf("NO_DATA"), readingsUsed = 0,
             )
         }
 
+        val now = Instant.now()
         val latest = recent.last()
         val currentGlucose = latest.glucoseValue
         val anchor = latest.measuredAt
+        // How stale the last reading is. The forecast must be anchored to *now*, not to the
+        // reading time, otherwise a reading taken 2 h ago is shown as the current value and
+        // every "+30 min" point is actually in the past.
+        val gapMinutes = ((now.epochSecond - anchor.epochSecond) / 60.0).coerceAtLeast(0.0)
 
         // Trend points — readings within the trend window, expressed in minutes relative to the anchor.
         val trendReadings = recent.filter {
@@ -87,28 +93,38 @@ class GlucoseForecastService(
             ?: defaultIcr
         val diaMin = (profile?.durationOfInsulinAction?.takeIf { it > 0 } ?: defaultDiaHours) * 60.0
         val carbAbsorptionMinutes = (profile?.carbAbsorptionMinutes ?: 120).toDouble()
+        // IOB and COB reflect the patient's state *now* (they include any dose/meal logged
+        // during the gap since the last reading), so the forecast projects forward from now.
         val iob = currentIob(user.id, diaMin)
         // If the client did not supply carbsOnBoard, derive it from meals eaten within the
         // absorption window — linear decay: COB = carbs × (1 − t / carbAbsorptionMinutes).
         val carbsOnBoard = if (request.carbsOnBoard > 0.0) {
             request.carbsOnBoard
         } else {
-            currentCob(user.id, anchor, carbAbsorptionMinutes)
+            currentCob(user.id, now, carbAbsorptionMinutes)
         }
+
+        // Estimate of glucose *right now*: the last reading carried forward over the gap by the
+        // damped trend (same damping the C model uses). This is what the chart shows at t = 0.
+        val gapDamping = Math.exp(-gapMinutes / 120.0)
+        val predictedNow = (currentGlucose + slopePerMin * gapMinutes * gapDamping).coerceAtLeast(1.0)
 
         val horizon = request.horizonMinutes.coerceIn(stepMinutes, 360)
         val riskFlags = mutableSetOf<String>()
         if (recent.size < minReadingsForConfidence) riskFlags += "LOW_CONFIDENCE"
+        if (predictedNow < hypoThreshold) riskFlags += "HYPO_RISK"
+        else if (predictedNow > hyperThreshold) riskFlags += "HYPER_RISK"
 
         val points = mutableListOf<ForecastPoint>()
         var h = stepMinutes
         while (h <= horizon) {
             val predicted = hbA1cLibrary.forecast_glucose(
-                currentGlucose, slopePerMin, h.toDouble(),
+                predictedNow, slopePerMin, h.toDouble(),
                 iob, isf, diaMin, carbsOnBoard, icr, carbAbsorptionMinutes,
             )
-            // Band widens with volatility and horizon; minimum 0.5 mmol/L of inherent uncertainty.
-            val band = (volatility + 0.5) * (1.0 + h / 120.0)
+            // Band widens with volatility and total time since the last real reading (gap + h);
+            // minimum 0.5 mmol/L of inherent uncertainty.
+            val band = (volatility + 0.5) * (1.0 + (gapMinutes + h) / 120.0)
             val lower = (predicted - band).coerceAtLeast(1.0)
             val upper = predicted + band
 
@@ -126,6 +142,8 @@ class GlucoseForecastService(
 
         return ForecastResponse(
             currentGlucose = round1(currentGlucose),
+            predictedNow = round1(predictedNow),
+            minutesSinceReading = gapMinutes.roundToLong().toInt(),
             trendPerMinute = round3(slopePerMin),
             points = points,
             riskFlags = riskFlags.toList(),

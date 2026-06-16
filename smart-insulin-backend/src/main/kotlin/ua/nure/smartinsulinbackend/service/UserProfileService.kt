@@ -72,6 +72,15 @@ class UserProfileService(
         val newCoefficientsJson: String? = request.activityCoefficients
             ?.let { mapper.writeValueAsString(it) }
 
+        // The client always echoes the current ICR/ISF back (the form is pre-filled from
+        // GET /api/profile, including adaptively-computed values), so a non-null field is
+        // NOT enough to mean "the user changed it". Only a value that actually differs from
+        // what is stored counts as a manual edit — that refreshes lastCoefficientUpdate so
+        // the weekly adaptive recalc does not treat the profile as stale and overwrite it.
+        val manualCoefficientChange =
+            (request.insulinSensitivityFactor != null && request.insulinSensitivityFactor != existing?.insulinSensitivityFactor) ||
+            (request.insulinToCarbRatio != null && request.insulinToCarbRatio != existing?.insulinToCarbRatio)
+
         val profile = if (existing != null) {
             UserProfile(
                 id                       = existing.id,
@@ -88,7 +97,7 @@ class UserProfileService(
                 activityCoefficients     = newCoefficientsJson ?: existing.activityCoefficients,
                 basalInsulinType         = request.basalInsulinType ?: existing.basalInsulinType,
                 bolusInsulinType         = request.bolusInsulinType ?: existing.bolusInsulinType,
-                lastCoefficientUpdate    = existing.lastCoefficientUpdate,
+                lastCoefficientUpdate    = if (manualCoefficientChange) Instant.now() else existing.lastCoefficientUpdate,
                 usingAdaptiveCoefficients = existing.usingAdaptiveCoefficients,
                 createdAt                = existing.createdAt,
                 updatedAt                = Instant.now(),
@@ -108,6 +117,7 @@ class UserProfileService(
                 activityCoefficients     = newCoefficientsJson,
                 basalInsulinType         = request.basalInsulinType,
                 bolusInsulinType         = request.bolusInsulinType,
+                lastCoefficientUpdate    = if (manualCoefficientChange) Instant.now() else null,
                 updatedAt                = Instant.now(),
             )
         }

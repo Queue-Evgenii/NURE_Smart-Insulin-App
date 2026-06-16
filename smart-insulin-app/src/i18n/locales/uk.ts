@@ -175,7 +175,7 @@ export default {
       doseType: 'Тип ін\'єкції',
       bolus: 'Болюс',
       basal: 'Базальний',
-      correction: 'Болюс',
+      correction: 'Корекційний',
       insulinType: 'Тип інсуліну (необов\'язково)',
       glucoseBefore: 'Глюкоза до введення (ммоль/л, необов\'язково)',
       button: 'Записати',
