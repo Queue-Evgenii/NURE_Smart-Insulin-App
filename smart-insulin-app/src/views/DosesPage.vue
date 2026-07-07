@@ -55,6 +55,13 @@
                   />
                 </ion-item>
                 <ion-item>
+                  <ion-label>{{ t('common.dateTime') }}</ion-label>
+                  <ion-datetime-button datetime="add-dose-time" slot="end" />
+                  <ion-modal :keep-contents-mounted="true">
+                    <ion-datetime id="add-dose-time" v-model="newInjectedAt" presentation="date-time" :max="nowMax" />
+                  </ion-modal>
+                </ion-item>
+                <ion-item>
                   <ion-input
                     v-model="newNotes"
                     type="text"
@@ -94,6 +101,9 @@
                     </ion-label>
                   </ion-item>
                   <ion-item-options side="end">
+                    <ion-item-option color="medium" @click="openEdit(d)">
+                      <ion-icon slot="icon-only" :icon="createOutline" />
+                    </ion-item-option>
                     <ion-item-option color="danger" @click="deleteDose(d.id)">
                       <ion-icon slot="icon-only" :icon="trashOutline" />
                     </ion-item-option>
@@ -111,6 +121,52 @@
 
         </div>
       </div>
+
+      <!-- Edit dose modal -->
+      <ion-modal :is-open="editOpen" @did-dismiss="editOpen = false">
+        <ion-header>
+          <ion-toolbar>
+            <ion-title>{{ t('doses.edit.title') }}</ion-title>
+            <ion-buttons slot="end">
+              <ion-button @click="editOpen = false">{{ t('common.cancel') }}</ion-button>
+            </ion-buttons>
+          </ion-toolbar>
+        </ion-header>
+        <ion-content class="ion-padding">
+          <ion-list lines="none">
+            <ion-item>
+              <ion-input v-model.number="editUnits" type="number" :label="t('doses.add.units')"
+                label-placement="floating" step="0.5" min="0" />
+            </ion-item>
+            <ion-item>
+              <ion-select v-model="editDoseType" :label="t('doses.add.doseType')" label-placement="floating"
+                interface="action-sheet" :cancel-text="t('common.back')">
+                <ion-select-option value="BOLUS">{{ t('doses.add.bolus') }}</ion-select-option>
+                <ion-select-option value="BASAL">{{ t('doses.add.basal') }}</ion-select-option>
+                <ion-select-option value="CORRECTION">{{ t('doses.add.correction') }}</ion-select-option>
+              </ion-select>
+            </ion-item>
+            <ion-item>
+              <ion-input v-model.number="editGlucoseBefore" type="number" :label="t('doses.add.glucoseBefore')"
+                label-placement="floating" step="0.1" min="0" />
+            </ion-item>
+            <ion-item>
+              <ion-label>{{ t('common.dateTime') }}</ion-label>
+              <ion-datetime-button datetime="edit-dose-time" slot="end" />
+              <ion-modal :keep-contents-mounted="true">
+                <ion-datetime id="edit-dose-time" v-model="editInjectedAt" presentation="date-time" :max="nowMax" />
+              </ion-modal>
+            </ion-item>
+            <ion-item>
+              <ion-input v-model="editNotes" type="text" :label="t('common.notes')" label-placement="floating" />
+            </ion-item>
+          </ion-list>
+          <ion-button expand="block" :disabled="saving" @click="saveEdit" class="ion-margin-top">
+            <ion-spinner v-if="saving" name="crescent" />
+            <span v-else>{{ t('common.save') }}</span>
+          </ion-button>
+        </ion-content>
+      </ion-modal>
     </ion-content>
   </ion-page>
 </template>
@@ -123,11 +179,14 @@ import {
   IonCard, IonCardHeader, IonCardTitle, IonCardContent,
   IonList, IonItem, IonItemSliding, IonItemOptions, IonItemOption,
   IonLabel, IonInput, IonSelect, IonSelectOption, IonBadge,
-  IonButton, IonSpinner, IonIcon,
+  IonButton, IonSpinner, IonIcon, IonModal, IonDatetime, IonDatetimeButton,
   toastController,
 } from '@ionic/vue';
-import { trashOutline } from 'ionicons/icons';
+import { trashOutline, createOutline } from 'ionicons/icons';
 import { apiFetch } from '@/services/api';
+import { RANGES, firstError, presentValidationError } from '@/utils/validation';
+import { nowLocalISO, apiToLocalISO, localToApiISO } from '@/utils/datetime';
+import { confirmAction } from '@/utils/confirm';
 
 const { t } = useI18n();
 
@@ -154,7 +213,24 @@ const newDoseType = ref('BOLUS');
 const newInsulinType = ref('');
 const newGlucoseBefore = ref<number | null>(null);
 const newNotes = ref('');
+const newInjectedAt = ref(nowLocalISO());
 const adding = ref(false);
+
+// Upper bound for datetime pickers: no future entries allowed
+const nowMax = nowLocalISO();
+
+// Edit modal state
+const editOpen = ref(false);
+const editId = ref<number | null>(null);
+const editUnits = ref<number | null>(null);
+const editDoseType = ref('BOLUS');
+const editGlucoseBefore = ref<number | null>(null);
+const editNotes = ref('');
+const editInjectedAt = ref(nowLocalISO());
+// preserved silently (not shown in the edit form) so it is not wiped on update
+const editInsulinType = ref<string | null>(null);
+const editMealRecordId = ref<number | null>(null);
+const saving = ref(false);
 
 function formatDate(iso: string): string { return new Date(iso).toLocaleString(); }
 
@@ -183,10 +259,14 @@ async function loadDoses(page = 0) {
 function loadMore() { loadDoses(currentPage.value + 1); }
 
 async function addDose() {
-  if (!newUnits.value || newUnits.value <= 0) return;
+  const err = firstError([
+    [newUnits.value, RANGES.doseUnits],
+    [newGlucoseBefore.value, RANGES.glucose, { required: false }],
+  ]);
+  if (err) { await presentValidationError(t(err.key, err.params ?? {})); return; }
   adding.value = true;
   try {
-    const now = new Date().toISOString();
+    const injectedAt = localToApiISO(newInjectedAt.value);
 
     if (newGlucoseBefore.value) {
       await apiFetch('/api/glucose', {
@@ -194,7 +274,7 @@ async function addDose() {
         body: JSON.stringify({
           glucoseValue: newGlucoseBefore.value,
           measurementType: 'MANUAL',
-          measuredAt: now,
+          measuredAt: injectedAt,
         }),
       });
     }
@@ -205,7 +285,7 @@ async function addDose() {
         doseUnits: newUnits.value,
         doseType: newDoseType.value,
         insulinType: newInsulinType.value || null,
-        injectedAt: now,
+        injectedAt,
         glucoseBefore: newGlucoseBefore.value || null,
         notes: newNotes.value || null,
       }),
@@ -215,6 +295,7 @@ async function addDose() {
       newInsulinType.value = '';
       newGlucoseBefore.value = null;
       newNotes.value = '';
+      newInjectedAt.value = nowLocalISO();
       await loadDoses(0);
       const toast = await toastController.create({ message: t('doses.add.success'), duration: 1500 });
       await toast.present();
@@ -227,7 +308,61 @@ async function addDose() {
   }
 }
 
+function openEdit(d: InsulinDose) {
+  editId.value = d.id;
+  editUnits.value = d.doseUnits;
+  editDoseType.value = d.doseType;
+  editGlucoseBefore.value = d.glucoseBefore;
+  editNotes.value = d.notes ?? '';
+  editInjectedAt.value = apiToLocalISO(d.injectedAt);
+  editInsulinType.value = d.insulinType;
+  editMealRecordId.value = d.mealRecordId;
+  editOpen.value = true;
+}
+
+async function saveEdit() {
+  if (editId.value == null) return;
+  const err = firstError([
+    [editUnits.value, RANGES.doseUnits],
+    [editGlucoseBefore.value, RANGES.glucose, { required: false }],
+  ]);
+  if (err) { await presentValidationError(t(err.key, err.params ?? {})); return; }
+  saving.value = true;
+  try {
+    const res = await apiFetch(`/api/doses/${editId.value}`, {
+      method: 'PUT',
+      body: JSON.stringify({
+        doseUnits: editUnits.value,
+        doseType: editDoseType.value,
+        insulinType: editInsulinType.value,
+        injectedAt: localToApiISO(editInjectedAt.value),
+        mealRecordId: editMealRecordId.value,
+        glucoseBefore: editGlucoseBefore.value || null,
+        notes: editNotes.value || null,
+      }),
+    });
+    if (res.ok) {
+      editOpen.value = false;
+      await loadDoses(0);
+      const toast = await toastController.create({ message: t('common.saved'), duration: 1500 });
+      await toast.present();
+    } else {
+      const toast = await toastController.create({ message: t('doses.add.error'), duration: 2000, color: 'danger' });
+      await toast.present();
+    }
+  } finally {
+    saving.value = false;
+  }
+}
+
 async function deleteDose(id: number) {
+  const confirmed = await confirmAction({
+    header: t('common.confirmDeleteTitle'),
+    message: t('common.confirmDeleteMessage'),
+    confirmText: t('common.delete'),
+    cancelText: t('common.cancel'),
+  });
+  if (!confirmed) return;
   const res = await apiFetch(`/api/doses/${id}`, { method: 'DELETE' });
   if (res.ok) doses.value = doses.value.filter(d => d.id !== id);
 }

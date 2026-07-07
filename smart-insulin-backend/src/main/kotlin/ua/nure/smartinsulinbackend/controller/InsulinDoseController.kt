@@ -29,6 +29,14 @@ class InsulinDoseController(private val insulinDoseService: InsulinDoseService) 
     ): Page<InsulinDoseResponse> =
         insulinDoseService.getDoses(user.id, page, size)
 
+    @PutMapping("/{id}")
+    fun updateDose(
+        @AuthenticationPrincipal user: User,
+        @PathVariable id: Long,
+        @RequestBody request: InsulinDoseRequest,
+    ): ResponseEntity<InsulinDoseResponse> =
+        ResponseEntity.ok(insulinDoseService.updateDose(user, id, request))
+
     @DeleteMapping("/{id}")
     fun deleteDose(
         @AuthenticationPrincipal user: User,

@@ -39,6 +39,25 @@ class GlucoseReadingService(
             .map { it.toResponse() }
     }
 
+    fun updateReading(user: User, readingId: Long, request: GlucoseReadingRequest): GlucoseReadingResponse {
+        val existing = glucoseReadingRepository.findById(readingId)
+            .orElseThrow { IllegalArgumentException("Reading not found") }
+        require(existing.user.id == user.id) { "Access denied" }
+
+        val updated = glucoseReadingRepository.save(
+            GlucoseReading(
+                id = existing.id,
+                user = existing.user,
+                glucoseValue = request.glucoseValue,
+                measurementType = MeasurementType.valueOf(request.measurementType),
+                measuredAt = request.measuredAt,
+                notes = request.notes,
+                createdAt = existing.createdAt,
+            )
+        )
+        return updated.toResponse()
+    }
+
     fun deleteReading(userId: Long, readingId: Long) {
         val reading = glucoseReadingRepository.findById(readingId)
             .orElseThrow { IllegalArgumentException("Reading not found") }

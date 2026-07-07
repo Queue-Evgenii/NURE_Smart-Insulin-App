@@ -264,6 +264,7 @@ import {
   toastController,
 } from '@ionic/vue';
 import { apiFetch } from '@/services/api';
+import { RANGES, checkRange } from '@/utils/validation';
 import { type AppLocale, saveLocale, getSavedLocale } from '@/i18n';
 import { type ThemeMode, applyTheme, getSavedTheme } from '@/services/theme';
 
@@ -417,6 +418,17 @@ async function loadProfile() {
 
 function validateForm(): string | null {
   const f = form.value;
+  // Body & target-glucose fields (optional): reject negative / out-of-range values
+  const rangeChecks: Array<[unknown, typeof RANGES[keyof typeof RANGES]]> = [
+    [f.weightKg, RANGES.weight],
+    [f.heightCm, RANGES.height],
+    [f.targetGlucoseMin, RANGES.targetGlucoseMin],
+    [f.targetGlucoseMax, RANGES.targetGlucoseMax],
+  ];
+  for (const [value, range] of rangeChecks) {
+    const err = checkRange(value, range, { required: false });
+    if (err) return t(err.key, err.params ?? {});
+  }
   if (f.insulinSensitivityFactor != null && (f.insulinSensitivityFactor < 0.5 || f.insulinSensitivityFactor > 20))
     return t('profile.validation.isfRange');
   if (f.insulinToCarbRatio != null && (f.insulinToCarbRatio < 1 || f.insulinToCarbRatio > 50))

@@ -304,6 +304,7 @@ import {
 } from '@ionic/vue';
 import { sparkles } from 'ionicons/icons';
 import { apiFetch } from '@/services/api';
+import { RANGES, firstError, checkRange, presentValidationError } from '@/utils/validation';
 
 const { t } = useI18n();
 
@@ -446,7 +447,20 @@ async function estimateCarbs() {
 }
 
 async function calculate() {
-  if (!currentGlucose.value || carbsG.value === null) return;
+  const fields: Parameters<typeof firstError>[0] = [
+    [currentGlucose.value, RANGES.glucose],
+    [carbsG.value, RANGES.carbs],
+    [glycemicIndex.value, RANGES.glycemicIndex, { required: false }],
+  ];
+  if (activityType.value) {
+    fields.push(
+      [minutesUntilActivity.value, RANGES.minutesUntilActivity, { required: false }],
+      // 0 means "not specified" for duration, so skip the range check in that case
+      [activityDurationMinutes.value || null, RANGES.activityDuration, { required: false }],
+    );
+  }
+  const err = firstError(fields);
+  if (err) { await presentValidationError(t(err.key, err.params ?? {})); return; }
   calculating.value = true;
   result.value = null;
   recommendation.value = null;
@@ -478,6 +492,8 @@ async function calculate() {
 
 async function logDose() {
   if (!result.value) return;
+  const err = checkRange(adjustedDose.value, RANGES.doseUnits);
+  if (err) { await presentValidationError(t(err.key, err.params ?? {})); return; }
   loggingDose.value = true;
   try {
     const now = new Date().toISOString();

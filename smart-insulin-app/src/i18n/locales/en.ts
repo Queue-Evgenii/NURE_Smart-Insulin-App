@@ -16,6 +16,18 @@ export default {
     back: 'Back',
     unitInsulin: 'U',
     unitGlucose: 'mmol/L',
+    save: 'Save',
+    saved: 'Changes saved',
+    dateTime: 'Date & time',
+    delete: 'Delete',
+    confirmDeleteTitle: 'Delete record?',
+    confirmDeleteMessage: 'This action cannot be undone.',
+    validation: {
+      required: 'Please enter a valid value',
+      invalid: 'Please enter a valid number',
+      integer: 'Value must be a whole number',
+      range: 'Value must be between {min} and {max}',
+    },
   },
   auth: {
     login: {
@@ -68,6 +80,9 @@ export default {
     recentReadings: {
       title: 'Recent Readings',
       empty: 'No readings yet. Add your first one above!',
+    },
+    editReading: {
+      title: 'Edit Reading',
     },
   },
   bolus: {
@@ -140,6 +155,10 @@ export default {
       carbsUnit: 'g carbs',
       gi: 'GI',
     },
+    edit: {
+      title: 'Edit Meal',
+      error: 'Failed to save meal',
+    },
   },
   doses: {
     title: 'Injection Journal',
@@ -161,6 +180,9 @@ export default {
       empty: 'No injections recorded yet.',
       glucoseBefore: 'Glucose before: {value} mmol/L',
       meal: 'Meal: {name}',
+    },
+    edit: {
+      title: 'Edit Injection',
     },
   },
   profile: {

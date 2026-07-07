@@ -41,6 +41,34 @@ class InsulinDoseService(
         return dose.toResponse()
     }
 
+    fun updateDose(user: User, doseId: Long, request: InsulinDoseRequest): InsulinDoseResponse {
+        val existing = insulinDoseRepository.findById(doseId)
+            .orElseThrow { IllegalArgumentException("Dose not found") }
+        require(existing.user.id == user.id) { "Access denied" }
+
+        val mealRecord = request.mealRecordId?.let {
+            mealRecordRepository.findById(it)
+                .orElseThrow { IllegalArgumentException("Meal record not found") }
+                .also { m -> require(m.user.id == user.id) { "Access denied" } }
+        } ?: existing.mealRecord
+
+        val updated = insulinDoseRepository.save(
+            InsulinDose(
+                id = existing.id,
+                user = existing.user,
+                doseUnits = request.doseUnits,
+                doseType = DoseType.valueOf(request.doseType),
+                insulinType = request.insulinType,
+                injectedAt = request.injectedAt,
+                mealRecord = mealRecord,
+                glucoseBefore = request.glucoseBefore,
+                notes = request.notes,
+                createdAt = existing.createdAt,
+            )
+        )
+        return updated.toResponse()
+    }
+
     @Transactional(readOnly = true)
     fun getDoses(userId: Long, page: Int, size: Int): Page<InsulinDoseResponse> =
         insulinDoseRepository

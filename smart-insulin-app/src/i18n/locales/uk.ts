@@ -19,6 +19,18 @@ export default {
     unitGlucose: 'ммоль/л',
     none: 'Немає',
     refresh: 'Оновити',
+    save: 'Зберегти',
+    saved: 'Зміни збережено',
+    dateTime: 'Дата та час',
+    delete: 'Видалити',
+    confirmDeleteTitle: 'Видалити запис?',
+    confirmDeleteMessage: 'Цю дію не можна скасувати.',
+    validation: {
+      required: 'Заповніть це поле коректним значенням',
+      invalid: 'Введіть коректне число',
+      integer: 'Значення повинно бути цілим числом',
+      range: 'Значення повинно бути від {min} до {max}',
+    },
   },
   auth: {
     login: {
@@ -71,6 +83,9 @@ export default {
     recentReadings: {
       title: 'Останні вимірювання',
       empty: 'Вимірювань ще немає. Додайте перше вище!',
+    },
+    editReading: {
+      title: 'Редагувати вимірювання',
     },
     forecast: {
       title: 'Прогноз глюкози',
@@ -166,6 +181,10 @@ export default {
       carbsUnit: 'г вугл.',
       gi: 'ГІ',
     },
+    edit: {
+      title: 'Редагувати прийом їжі',
+      error: 'Не вдалося зберегти прийом їжі',
+    },
   },
   doses: {
     title: 'Журнал ін\'єкцій',
@@ -187,6 +206,9 @@ export default {
       empty: 'Ін\'єкцій ще не записано.',
       glucoseBefore: 'Глюкоза до: {value} ммоль/л',
       meal: 'Їжа: {name}',
+    },
+    edit: {
+      title: 'Редагувати ін\'єкцію',
     },
   },
   profile: {

@@ -31,6 +31,14 @@ class GlucoseReadingController(private val glucoseReadingService: GlucoseReading
     ): Page<GlucoseReadingResponse> =
         glucoseReadingService.getReadings(user.id, page, size)
 
+    @PutMapping("/{id}")
+    fun updateReading(
+        @AuthenticationPrincipal user: User,
+        @PathVariable id: Long,
+        @RequestBody request: GlucoseReadingRequest,
+    ): ResponseEntity<GlucoseReadingResponse> =
+        ResponseEntity.ok(glucoseReadingService.updateReading(user, id, request))
+
     @DeleteMapping("/{id}")
     fun deleteReading(
         @AuthenticationPrincipal user: User,

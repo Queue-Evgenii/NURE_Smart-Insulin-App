@@ -108,6 +108,13 @@
                     </ion-select>
                   </ion-item>
                   <ion-item>
+                    <ion-label>{{ t('common.dateTime') }}</ion-label>
+                    <ion-datetime-button datetime="add-reading-time" slot="end" />
+                    <ion-modal :keep-contents-mounted="true">
+                      <ion-datetime id="add-reading-time" v-model="newMeasuredAt" presentation="date-time" :max="nowMax" />
+                    </ion-modal>
+                  </ion-item>
+                  <ion-item>
                     <ion-input
                       v-model="newNotes"
                       type="text"
@@ -145,6 +152,9 @@
                     </ion-label>
                   </ion-item>
                   <ion-item-options side="end">
+                    <ion-item-option color="medium" @click="openEdit(r)">
+                      <ion-icon slot="icon-only" :icon="createOutline" />
+                    </ion-item-option>
                     <ion-item-option color="danger" @click="deleteReading(r.id)">
                       <ion-icon slot="icon-only" :icon="trashOutline" />
                     </ion-item-option>
@@ -163,6 +173,47 @@
           </ion-card>
         </div>
       </div>
+
+      <!-- Edit reading modal -->
+      <ion-modal :is-open="editOpen" @did-dismiss="editOpen = false">
+        <ion-header>
+          <ion-toolbar>
+            <ion-title>{{ t('dashboard.editReading.title') }}</ion-title>
+            <ion-buttons slot="end">
+              <ion-button @click="editOpen = false">{{ t('common.cancel') }}</ion-button>
+            </ion-buttons>
+          </ion-toolbar>
+        </ion-header>
+        <ion-content class="ion-padding">
+          <ion-list lines="none">
+            <ion-item>
+              <ion-input v-model.number="editGlucose" type="number" :label="t('dashboard.addReading.glucose')"
+                label-placement="floating" step="0.1" min="0" />
+            </ion-item>
+            <ion-item>
+              <ion-select v-model="editMeasurementType" :label="t('dashboard.addReading.measurementType')"
+                label-placement="floating" interface="action-sheet" :cancel-text="t('common.back')">
+                <ion-select-option value="MANUAL">{{ t('dashboard.addReading.manual') }}</ion-select-option>
+                <ion-select-option value="CGM">{{ t('dashboard.addReading.cgm') }}</ion-select-option>
+              </ion-select>
+            </ion-item>
+            <ion-item>
+              <ion-label>{{ t('common.dateTime') }}</ion-label>
+              <ion-datetime-button datetime="edit-reading-time" slot="end" />
+              <ion-modal :keep-contents-mounted="true">
+                <ion-datetime id="edit-reading-time" v-model="editMeasuredAt" presentation="date-time" :max="nowMax" />
+              </ion-modal>
+            </ion-item>
+            <ion-item>
+              <ion-input v-model="editNotes" type="text" :label="t('common.notes')" label-placement="floating" />
+            </ion-item>
+          </ion-list>
+          <ion-button expand="block" :disabled="savingEdit" @click="saveEdit" class="ion-margin-top">
+            <ion-spinner v-if="savingEdit" name="crescent" />
+            <span v-else>{{ t('common.save') }}</span>
+          </ion-button>
+        </ion-content>
+      </ion-modal>
     </ion-content>
   </ion-page>
 </template>
@@ -177,10 +228,14 @@ import {
   IonCard, IonCardHeader, IonCardTitle, IonCardSubtitle, IonCardContent,
   IonList, IonItem, IonItemSliding, IonItemOptions, IonItemOption,
   IonLabel, IonInput, IonSelect, IonSelectOption, IonButton, IonIcon, IonSpinner, IonBadge,
+  IonModal, IonDatetime, IonDatetimeButton,
   toastController,
 } from '@ionic/vue';
-import { trashOutline } from 'ionicons/icons';
+import { trashOutline, createOutline } from 'ionicons/icons';
 import { apiFetch } from '@/services/api';
+import { RANGES, checkRange, presentValidationError } from '@/utils/validation';
+import { nowLocalISO, apiToLocalISO, localToApiISO } from '@/utils/datetime';
+import { confirmAction } from '@/utils/confirm';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Filler, Tooltip, Legend);
 
@@ -235,7 +290,20 @@ const forecastLoading = ref(false);
 const newGlucose = ref<number | null>(null);
 const newMeasurementType = ref('MANUAL');
 const newNotes = ref('');
+const newMeasuredAt = ref(nowLocalISO());
 const addingReading = ref(false);
+
+// Upper bound for datetime pickers: no future entries allowed
+const nowMax = nowLocalISO();
+
+// Edit modal state
+const editOpen = ref(false);
+const editId = ref<number | null>(null);
+const editGlucose = ref<number | null>(null);
+const editMeasurementType = ref('MANUAL');
+const editMeasuredAt = ref(nowLocalISO());
+const editNotes = ref('');
+const savingEdit = ref(false);
 
 function glucoseColor(value: number): string {
   if (value < 4.0) return 'glucose-low';
@@ -444,7 +512,8 @@ async function loadHbA1c() {
 }
 
 async function addReading() {
-  if (!newGlucose.value || newGlucose.value <= 0) return;
+  const err = checkRange(newGlucose.value, RANGES.glucose);
+  if (err) { await presentValidationError(t(err.key, err.params ?? {})); return; }
   addingReading.value = true;
   try {
     const res = await apiFetch('/api/glucose', {
@@ -452,13 +521,14 @@ async function addReading() {
       body: JSON.stringify({
         glucoseValue: newGlucose.value,
         measurementType: newMeasurementType.value,
-        measuredAt: new Date().toISOString(),
+        measuredAt: localToApiISO(newMeasuredAt.value),
         notes: newNotes.value || null,
       }),
     });
     if (res.ok) {
       newGlucose.value = null;
       newNotes.value = '';
+      newMeasuredAt.value = nowLocalISO();
       await Promise.all([loadReadings(0), loadHbA1c(), loadForecast()]);
       const toast = await toastController.create({ message: t('dashboard.addReading.success'), duration: 1500 });
       await toast.present();
@@ -471,7 +541,52 @@ async function addReading() {
   }
 }
 
+function openEdit(r: GlucoseReading) {
+  editId.value = r.id;
+  editGlucose.value = r.glucoseValue;
+  editMeasurementType.value = r.measurementType;
+  editMeasuredAt.value = apiToLocalISO(r.measuredAt);
+  editNotes.value = r.notes ?? '';
+  editOpen.value = true;
+}
+
+async function saveEdit() {
+  if (editId.value == null) return;
+  const err = checkRange(editGlucose.value, RANGES.glucose);
+  if (err) { await presentValidationError(t(err.key, err.params ?? {})); return; }
+  savingEdit.value = true;
+  try {
+    const res = await apiFetch(`/api/glucose/${editId.value}`, {
+      method: 'PUT',
+      body: JSON.stringify({
+        glucoseValue: editGlucose.value,
+        measurementType: editMeasurementType.value,
+        measuredAt: localToApiISO(editMeasuredAt.value),
+        notes: editNotes.value || null,
+      }),
+    });
+    if (res.ok) {
+      editOpen.value = false;
+      await Promise.all([loadReadings(0), loadHbA1c(), loadForecast()]);
+      const toast = await toastController.create({ message: t('common.saved'), duration: 1500 });
+      await toast.present();
+    } else {
+      const toast = await toastController.create({ message: t('dashboard.addReading.error'), duration: 2000, color: 'danger' });
+      await toast.present();
+    }
+  } finally {
+    savingEdit.value = false;
+  }
+}
+
 async function deleteReading(id: number) {
+  const confirmed = await confirmAction({
+    header: t('common.confirmDeleteTitle'),
+    message: t('common.confirmDeleteMessage'),
+    confirmText: t('common.delete'),
+    cancelText: t('common.cancel'),
+  });
+  if (!confirmed) return;
   const res = await apiFetch(`/api/glucose/${id}`, { method: 'DELETE' });
   if (res.ok) {
     readings.value = readings.value.filter(r => r.id !== id);

@@ -28,6 +28,26 @@ class MealRecordService(private val mealRecordRepository: MealRecordRepository) 
         return record.toResponse()
     }
 
+    fun updateMeal(user: User, mealId: Long, request: MealRecordRequest): MealRecordResponse {
+        val existing = mealRecordRepository.findById(mealId)
+            .orElseThrow { IllegalArgumentException("Meal not found") }
+        require(existing.user.id == user.id) { "Access denied" }
+
+        val updated = mealRecordRepository.save(
+            MealRecord(
+                id = existing.id,
+                user = existing.user,
+                mealName = request.mealName,
+                carbohydratesG = request.carbohydratesG,
+                glycemicIndex = request.glycemicIndex,
+                mealTime = request.mealTime,
+                notes = request.notes,
+                createdAt = existing.createdAt,
+            )
+        )
+        return updated.toResponse()
+    }
+
     @Transactional(readOnly = true)
     fun getMeals(userId: Long, page: Int, size: Int): Page<MealRecordResponse> =
         mealRecordRepository

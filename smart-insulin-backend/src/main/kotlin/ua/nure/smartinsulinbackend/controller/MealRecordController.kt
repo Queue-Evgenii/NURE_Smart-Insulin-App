@@ -29,6 +29,14 @@ class MealRecordController(private val mealRecordService: MealRecordService) {
     ): Page<MealRecordResponse> =
         mealRecordService.getMeals(user.id, page, size)
 
+    @PutMapping("/{id}")
+    fun updateMeal(
+        @AuthenticationPrincipal user: User,
+        @PathVariable id: Long,
+        @RequestBody request: MealRecordRequest,
+    ): ResponseEntity<MealRecordResponse> =
+        ResponseEntity.ok(mealRecordService.updateMeal(user, id, request))
+
     @DeleteMapping("/{id}")
     fun deleteMeal(
         @AuthenticationPrincipal user: User,
